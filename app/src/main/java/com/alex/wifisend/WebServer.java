@@ -25,6 +25,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -69,8 +70,10 @@ public class WebServer {
         }
     };
 
-    /** Latest uploads: {relative path, upload time}. Newest last. */
+    /** Latest new files: {relative path, time}. Newest last. */
     private final List<Object[]> recent = new ArrayList<>();
+    /** Paths this server itself created or renamed recently — the folder watcher ignores them. */
+    private final Map<String, Long> own = new HashMap<>();
 
     /** Number of phones / computers that used the page during the last 90 seconds. */
     public int activeClients() {
@@ -389,6 +392,48 @@ public class WebServer {
         sendJson(out, 200, o);
     }
 
+    /** A new file appeared (web upload or copied over USB): show it in «Just received». */
+    public void addRecent(String rel) {
+        synchronized (recent) {
+            for (int i = recent.size() - 1; i >= 0; i--) {
+                if (rel.equals(recent.get(i)[0])) {
+                    recent.remove(i);
+                }
+            }
+            recent.add(new Object[]{rel, System.currentTimeMillis()});
+            while (recent.size() > 20) {
+                recent.remove(0);
+            }
+        }
+    }
+
+    private void markOwn(String rel) {
+        synchronized (own) {
+            long now = System.currentTimeMillis();
+            own.put(rel, now);
+            if (own.size() > 500) {
+                Iterator<Map.Entry<String, Long>> it = own.entrySet().iterator();
+                while (it.hasNext()) {
+                    if (now - it.next().getValue() > 120_000) {
+                        it.remove();
+                    }
+                }
+            }
+        }
+    }
+
+    /** True if the server itself wrote / renamed this path in the last two minutes. */
+    public boolean isOwn(String rel) {
+        synchronized (own) {
+            Long t = own.get(rel);
+            return t != null && System.currentTimeMillis() - t < 120_000;
+        }
+    }
+
+    public File getRoot() {
+        return root;
+    }
+
     /**
      * Files uploaded a moment ago, for the «Just received» block on the home screen.
      * The block stays while less than recentSec seconds passed since the LAST upload.
@@ -429,6 +474,8 @@ public class WebServer {
             }
         }
         o.put("left", arr.length() > 0 ? Math.max(0, left / 1000) + 1 : 0);
+        o.put("leftMs", arr.length() > 0 ? Math.max(0, left) : 0);
+        o.put("win", win);
         o.put("items", arr);
         sendJson(out, 200, o);
     }
@@ -606,12 +653,8 @@ public class WebServer {
             throw new IOException("Cannot save file");
         }
         scan(target.getAbsolutePath());
-        synchronized (recent) {
-            recent.add(new Object[]{rel(target), System.currentTimeMillis()});
-            while (recent.size() > 20) {
-                recent.remove(0);
-            }
-        }
+        addRecent(rel(target));
+        markOwn(rel(target));
         if (listener != null) {
             listener.onUploaded(rel(target), len, ip);
         }
@@ -684,6 +727,12 @@ public class WebServer {
             return;
         }
         collect(nf, paths);
+        for (String ap : paths) {
+            try {
+                markOwn(rel(new File(ap)));
+            } catch (IOException ignored) {
+            }
+        }
         scan(paths.toArray(new String[0]));
         event("✏️", oldName + " → " + nf.getName(), ip);
         sendOk(out);

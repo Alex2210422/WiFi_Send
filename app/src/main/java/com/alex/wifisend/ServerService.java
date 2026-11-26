@@ -33,6 +33,8 @@ public class ServerService extends Service {
     public static volatile int port = 0;
     public static volatile String lastError = null;
     private static volatile WebServer current;
+    private FolderWatcher watcher;
+    private static final int ID_USB = 90;
 
     private WebServer server;
     private PowerManager.WakeLock wakeLock;
@@ -93,6 +95,7 @@ public class ServerService extends Service {
             return START_NOT_STICKY;
         }
         if (ACTION_RESTART.equals(action) && server != null) {
+            stopWatcher();
             server.stop();
             server = null;
             current = null;
@@ -119,6 +122,8 @@ public class ServerService extends Service {
                 });
                 server.start(8080);
                 current = server;
+                watcher = new FolderWatcher(server, this::copiedOverUsb);
+                watcher.start();
                 port = server.getPort();
                 running = true;
                 lastError = null;
@@ -149,6 +154,7 @@ public class ServerService extends Service {
     @Override
     public void onDestroy() {
         boolean wasRunning = running;
+        stopWatcher();
         if (server != null) {
             server.stop();
             server = null;
@@ -318,6 +324,39 @@ public class ServerService extends Service {
         if (nextId > 1000) {
             nextId = 100;
         }
+    }
+
+    private void stopWatcher() {
+        if (watcher != null) {
+            watcher.stop();
+            watcher = null;
+        }
+    }
+
+    /** Files that appeared in the folder not through the web page (copied from a PC over USB). */
+    private synchronized void copiedOverUsb(java.util.List<java.io.File> files) {
+        long total = 0;
+        for (java.io.File f : files) {
+            total += f.length();
+            EventLog.add(this, "🔌", Util.t("По USB: ", "Via USB: ") + f.getName()
+                    + " (" + Util.size(f.length()) + ")", null);
+        }
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm == null) {
+            return;
+        }
+        String text = files.size() == 1
+                ? files.get(0).getName() + " (" + Util.size(total) + ")"
+                : Util.t("Файлов: ", "Files: ") + files.size() + " (" + Util.size(total) + ")";
+        Notification n = builder(CH_FILES)
+                .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                .setContentTitle(Util.t("🔌 Получено по USB", "🔌 Received via USB"))
+                .setContentText(text)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(true)
+                .setContentIntent(openApp())
+                .build();
+        nm.notify(ID_USB, n);
     }
 
     private PendingIntent openApp() {
