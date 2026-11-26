@@ -510,7 +510,9 @@ public class WebServer {
         long count = len == 0 ? 0 : end - start + 1;
         boolean download = "1".equals(q.get("dl"));
         Map<String, String> hh = new LinkedHashMap<>();
-        hh.put("Content-Type", mimeOf(f.getName()));
+        // iOS Safari opens PDFs / pictures in place even with «attachment»;
+        // a neutral type makes it really download the file.
+        hh.put("Content-Type", download ? "application/octet-stream" : mimeOf(f.getName()));
         hh.put("Content-Length", String.valueOf(count));
         hh.put("Accept-Ranges", "bytes");
         if (partial) {
