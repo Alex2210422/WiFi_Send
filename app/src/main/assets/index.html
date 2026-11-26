@@ -61,6 +61,7 @@
   .meter { height: 6px; border-radius: 3px; background: var(--card-2); margin-top: 8px; overflow: hidden; }
   .meter i { display: block; height: 100%; background: var(--accent); width: 0; }
 
+  .credit { text-align: center; font-size: 12px; color: var(--muted); margin-top: 18px; opacity: .8; }
   .recent { margin-top: 4px; animation: pop .25s ease; }
   .recent .head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 8px; }
   .recent .head b { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--green); font-weight: 700;
@@ -261,6 +262,7 @@
         <div class="timer"><i id="recentBar"></i></div>
         <div class="card" id="recentList"></div>
       </div>
+      <div class="credit"><span data-t="by"></span> · Hello from Moldova 🇲🇩</div>
     </div>
   </section>
 
@@ -345,7 +347,7 @@
       created: "Папка создана", uploadedN: "Загружено файлов: {0}", newFiles: "Новые файлы: {0}", error: "Ошибка: {0}",
       offline: "Нет связи с сервером", root: "WiFiSend", refreshed: "Обновлено",
       selected: "Выбрано: {0}", selectHint: "Нажмите на файлы", all: "Все", zipping: "Готовлю архив…",
-      justGot: "Только что получено", allFiles: "Все файлы →", agoS: "{0} с назад", agoM: "{0} мин назад", agoNow: "только что",
+      by: "by Шитиков Александр", justGot: "Только что получено", allFiles: "Все файлы →", agoS: "{0} с назад", agoM: "{0} мин назад", agoNow: "только что",
       pinTitle: "Введите PIN‑код", pinEnter: "Войти", pinWrong: "Неверный PIN", pinWait: "Слишком много попыток. Подождите {0} с"
     },
     en: {
@@ -363,7 +365,7 @@
       created: "Folder created", uploadedN: "Files uploaded: {0}", newFiles: "New files: {0}", error: "Error: {0}",
       offline: "Can't reach the server", root: "WiFiSend", refreshed: "Refreshed",
       selected: "Selected: {0}", selectHint: "Tap files", all: "All", zipping: "Preparing archive…",
-      justGot: "Just received", allFiles: "All files →", agoS: "{0} s ago", agoM: "{0} min ago", agoNow: "just now",
+      by: "by Oleksandr Shytikov", justGot: "Just received", allFiles: "All files →", agoS: "{0} s ago", agoM: "{0} min ago", agoNow: "just now",
       pinTitle: "Enter PIN code", pinEnter: "Enter", pinWrong: "Wrong PIN", pinWait: "Too many attempts. Wait {0} s"
     }
   };
