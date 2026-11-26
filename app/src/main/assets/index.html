@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="WiFi Send">
+<meta name="theme-color" content="#1565c0">
+<title>WiFi Send</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --card: #ffffff; --text: #16202c; --muted: #6b7686;
+    --line: #e3e7ee; --accent: #1565c0; --accent-2: #2e7d32; --danger: #c62828;
+    --shadow: 0 2px 10px rgba(0,0,0,.08);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1419; --card: #1a2129; --text: #e6edf3; --muted: #8b98a8;
+    --line: #2a333d; --accent: #5aa2f0; --accent-2: #66bb6a; --danger: #ef5350;
+    --shadow: 0 2px 10px rgba(0,0,0,.4);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root[data-theme="auto"] {
+      --bg: #0f1419; --card: #1a2129; --text: #e6edf3; --muted: #8b98a8;
+      --line: #2a333d; --accent: #5aa2f0; --accent-2: #66bb6a; --danger: #ef5350;
+      --shadow: 0 2px 10px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); }
+
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  header h1 { font-size: 20px; margin: 0; flex: 1; display: flex; align-items: center; gap: 8px; }
+  .back { border: 0; background: none; font-size: 26px; padding: 0 6px 0 0; line-height: 1; color: var(--accent); }
+  .chip { border: 1px solid var(--line); background: var(--card); border-radius: 10px;
+    padding: 6px 10px; font-size: 14px; min-width: 40px; }
+  .sub { color: var(--muted); font-size: 13px; margin: -8px 0 14px; }
+
+  /* Home */
+  .home { display: grid; gap: 16px; margin-top: 8vh; }
+  .big { border: 0; border-radius: 22px; padding: 34px 20px; font-size: 24px; font-weight: 600;
+    color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    box-shadow: var(--shadow); }
+  .big span.i { font-size: 54px; line-height: 1; }
+  .big.send { background: linear-gradient(135deg, #1e88e5, #1565c0); }
+  .big.browse { background: linear-gradient(135deg, #43a047, #2e7d32); }
+  .big:active { transform: scale(.98); }
+  .free { text-align: center; color: var(--muted); font-size: 14px; margin-top: 6px; }
+
+  /* Cards & lists */
+  .card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .toolbar input, .toolbar select { flex: 1; min-width: 120px; padding: 9px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; }
+  .btn { border: 0; border-radius: 10px; padding: 9px 14px; background: var(--accent); color: #fff; font-weight: 600; }
+  .btn.alt { background: var(--card); color: var(--text); border: 1px solid var(--line); }
+  .crumbs { font-size: 14px; color: var(--muted); margin: 0 2px 10px; overflow-x: auto; white-space: nowrap; }
+  .crumbs a { color: var(--accent); text-decoration: none; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row .ic { font-size: 26px; width: 32px; text-align: center; flex: none; }
+  .row .nm { flex: 1; min-width: 0; }
+  .row .nm b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .nm small { color: var(--muted); font-size: 12px; }
+  .row .more { border: 0; background: none; font-size: 22px; padding: 4px 8px; color: var(--muted); }
+  .row.click { cursor: pointer; }
+  .row.click:active { background: var(--line); }
+  .empty { padding: 40px 16px; text-align: center; color: var(--muted); }
+
+  /* Send screen */
+  .drop { border: 2px dashed var(--line); border-radius: 18px; padding: 30px 16px; text-align: center;
+    background: var(--card); }
+  .drop.over { border-color: var(--accent); }
+  .drop .i { font-size: 48px; }
+  .drop p { color: var(--muted); margin: 8px 0 16px; }
+  .picks { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+  .picks .btn { padding: 14px; font-size: 16px; }
+  .up { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .up:last-child { border-bottom: 0; }
+  .up .top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+  .up .top b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar { height: 6px; background: var(--line); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  .up.done .bar i { background: var(--accent-2); }
+  .up.err .bar i { background: var(--danger); }
+  h3 { font-size: 15px; color: var(--muted); margin: 18px 4px 8px; font-weight: 600; }
+
+  /* Sheet & toast */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: flex-end; justify-content: center; z-index: 10; }
+  .sheet-bg.show { display: flex; }
+  .sheet { background: var(--card); width: 100%; max-width: 520px; border-radius: 18px 18px 0 0;
+    padding: 10px 10px calc(14px + env(safe-area-inset-bottom)); }
+  .sheet .title { padding: 10px 12px 12px; font-weight: 600; word-break: break-all; border-bottom: 1px solid var(--line); }
+  .sheet button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 14px 12px; font-size: 17px; border-radius: 10px; }
+  .sheet button:active { background: var(--line); }
+  .sheet button.danger { color: var(--danger); }
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(120px);
+    background: #222; color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 15px; transition: transform .25s; z-index: 20; max-width: 90%; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HOME -->
+  <section id="home">
+    <header>
+      <h1>📶 WiFi Send</h1>
+      <button class="chip" id="themeBtn" title="Theme">🌓</button>
+      <button class="chip" id="langBtn">RU</button>
+    </header>
+    <div class="sub" id="device"></div>
+    <div class="home">
+      <button class="big send" id="goSend"><span class="i">📤</span><span data-t="send"></span></button>
+      <button class="big browse" id="goBrowse"><span class="i">📂</span><span data-t="browse"></span></button>
+      <div class="free" id="free"></div>
+    </div>
+  </section>
+
+  <!-- SEND -->
+  <section id="send" class="hidden">
+    <header>
+      <h1><button class="back" data-home>‹</button><span data-t="send"></span></h1>
+    </header>
+    <div class="drop" id="drop">
+      <div class="i">📤</div>
+      <p data-t="dropHint"></p>
+      <div class="picks">
+        <button class="btn" id="pickFiles" data-t="pickFiles"></button>
+        <button class="btn alt" id="pickMedia" data-t="pickMedia"></button>
+      </div>
+    </div>
+    <input type="file" id="fileInput" multiple class="hidden">
+    <input type="file" id="mediaInput" multiple accept="image/*,video/*" class="hidden">
+    <h3 id="upTitle" class="hidden" data-t="uploads"></h3>
+    <div class="card" id="upList"></div>
+  </section>
+
+  <!-- BROWSE -->
+  <section id="browse" class="hidden">
+    <header>
+      <h1><button class="back" data-home>‹</button><span data-t="browse"></span></h1>
+      <button class="chip" id="refreshBtn">🔄</button>
+    </header>
+    <div class="toolbar">
+      <input type="search" id="search">
+      <select id="sort">
+        <option value="date" data-t="sortDate"></option>
+        <option value="name" data-t="sortName"></option>
+        <option value="size" data-t="sortSize"></option>
+      </select>
+      <button class="btn alt" id="mkdirBtn">📁＋</button>
+      <button class="btn" id="upHereBtn">📤</button>
+    </div>
+    <div class="crumbs" id="crumbs"></div>
+    <div class="card" id="list"></div>
+    <input type="file" id="hereInput" multiple class="hidden">
+  </section>
+</div>
+
+<div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var T = {
+    ru: {
+      send: "Отправить", browse: "Просмотреть", free: "Свободно: {0} из {1}",
+      dropHint: "Выберите файлы — они сразу загрузятся в папку обмена",
+      pickFiles: "📄 Файлы", pickMedia: "🖼️ Фото и видео", uploads: "Загрузки",
+      waiting: "ожидание…", done: "готово", failed: "ошибка",
+      sortDate: "Сначала новые", sortName: "По имени", sortSize: "По размеру",
+      search: "Поиск…", empty: "Папка пуста", nothing: "Ничего не найдено",
+      open: "👁️ Открыть", download: "⬇️ Скачать", rename: "✏️ Переименовать", del: "🗑️ Удалить",
+      cancel: "Отмена", newFolder: "Название новой папки:", newName: "Новое имя:",
+      confirmDel: "Удалить «{0}»?", deleted: "Удалено", renamed: "Переименовано", created: "Папка создана",
+      uploadedN: "Загружено файлов: {0}", newFiles: "Новые файлы: {0}", error: "Ошибка: {0}",
+      offline: "Нет связи с планшетом", root: "WiFiSend", items: "{0} шт."
+    },
+    en: {
+      send: "Send", browse: "Browse", free: "Free: {0} of {1}",
+      dropHint: "Pick files — they upload straight to the shared folder",
+      pickFiles: "📄 Files", pickMedia: "🖼️ Photos & videos", uploads: "Uploads",
+      waiting: "waiting…", done: "done", failed: "failed",
+      sortDate: "Newest first", sortName: "By name", sortSize: "By size",
+      search: "Search…", empty: "Folder is empty", nothing: "Nothing found",
+      open: "👁️ Open", download: "⬇️ Download", rename: "✏️ Rename", del: "🗑️ Delete",
+      cancel: "Cancel", newFolder: "New folder name:", newName: "New name:",
+      confirmDel: "Delete “{0}”?", deleted: "Deleted", renamed: "Renamed", created: "Folder created",
+      uploadedN: "Files uploaded: {0}", newFiles: "New files: {0}", error: "Error: {0}",
+      offline: "Can't reach the tablet", root: "WiFiSend", items: "{0} items"
+    }
+  };
+
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+  var lang = store("ws_lang") || "ru";
+  var theme = store("ws_theme") || "auto";
+  var $ = function (id) { return document.getElementById(id); };
+
+  function t(key) {
+    var s = (T[lang] && T[lang][key]) || T.ru[key] || key;
+    for (var i = 1; i < arguments.length; i++) s = s.replace("{" + (i - 1) + "}", arguments[i]);
+    return s;
+  }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function enc(s) { return encodeURIComponent(s); }
+  function join(a, b) { return a ? a + "/" + b : b; }
+  function fmtSize(b) {
+    if (b < 1024) return b + " B";
+    var u = ["KB", "MB", "GB", "TB"], i = -1;
+    do { b /= 1024; i++; } while (b >= 1024 && i < u.length - 1);
+    return (b < 10 ? b.toFixed(1) : Math.round(b)) + " " + u[i];
+  }
+  function fmtDate(ms) {
+    var d = new Date(ms);
+    try { return d.toLocaleString(lang === "ru" ? "ru-RU" : "en-GB", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+    catch (e) { return d.toLocaleString(); }
+  }
+  function icon(it) {
+    if (it.dir) return "📁";
+    var e = (it.name.split(".").pop() || "").toLowerCase();
+    if (/^(jpe?g|png|gif|heic|heif|webp|bmp|svg)$/.test(e)) return "🖼️";
+    if (/^(mp4|mov|m4v|avi|mkv|webm|3gp)$/.test(e)) return "🎬";
+    if (/^(mp3|m4a|aac|wav|ogg|flac|opus)$/.test(e)) return "🎵";
+    if (e === "pdf") return "📕";
+    if (/^(docx?|odt|rtf|txt|md)$/.test(e)) return "📝";
+    if (/^(xlsx?|ods|csv)$/.test(e)) return "📊";
+    if (/^(pptx?|odp)$/.test(e)) return "📽️";
+    if (/^(zip|rar|7z|tar|gz)$/.test(e)) return "🗜️";
+    if (e === "apk") return "🤖";
+    return "📄";
+  }
+
+  var toastTimer;
+  function toast(msg) {
+    var el = $("toast");
+    el.textContent = msg; el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2600);
+  }
+
+  function api(url, method) {
+    return fetch(url, { method: method || "GET", cache: "no-store" }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+        return j;
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------- i18n / theme
+  function applyLang() {
+    document.documentElement.lang = lang;
+    $("langBtn").textContent = lang.toUpperCase();
+    var nodes = document.querySelectorAll("[data-t]");
+    for (var i = 0; i < nodes.length; i++) nodes[i].textContent = t(nodes[i].getAttribute("data-t"));
+    $("search").placeholder = t("search");
+    loadInfo();
+    if (view === "browse") render();
+  }
+  function applyTheme() {
+    document.documentElement.setAttribute("data-theme", theme);
+    $("themeBtn").textContent = theme === "auto" ? "🌓" : theme === "dark" ? "🌙" : "☀️";
+  }
+  $("langBtn").onclick = function () { lang = lang === "ru" ? "en" : "ru"; store("ws_lang", lang); applyLang(); };
+  $("themeBtn").onclick = function () {
+    theme = theme === "auto" ? "light" : theme === "light" ? "dark" : "auto";
+    store("ws_theme", theme); applyTheme();
+  };
+
+  // ---------------------------------------------------------------- navigation
+  var view = "home";
+  function show(v, push) {
+    view = v;
+    ["home", "send", "browse"].forEach(function (s) { $(s).classList.toggle("hidden", s !== v); });
+    if (push !== false) { try { history.pushState({ v: v, p: curPath }, ""); } catch (e) {} }
+    if (v === "browse") load(curPath, false);
+    if (v === "home") loadInfo();
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("popstate", function (e) {
+    var st = e.state || { v: "home" };
+    if (st.v === "browse") curPath = st.p || "";
+    show(st.v, false);
+  });
+  try { history.replaceState({ v: "home" }, ""); } catch (e) {}
+  $("goSend").onclick = function () { show("send"); };
+  $("goBrowse").onclick = function () { curPath = ""; show("browse"); };
+  var backs = document.querySelectorAll("[data-home]");
+  for (var b = 0; b < backs.length; b++) backs[b].onclick = function () {
+    if (view === "browse" && curPath) { var p = curPath.split("/"); p.pop(); go(p.join("/")); }
+    else show("home");
+  };
+
+  function loadInfo() {
+    api("/api/info").then(function (i) {
+      $("device").textContent = i.device + " · 📁 " + i.folder;
+      $("free").textContent = t("free", fmtSize(i.free), fmtSize(i.total));
+    }).catch(function () { $("free").textContent = t("offline"); });
+  }
+
+  // ---------------------------------------------------------------- upload
+  var queue = [], uploading = false, uploadedCount = 0, ownNames = {};
+
+  function addFiles(files, path) {
+    if (!files || !files.length) return;
+    $("upTitle").classList.remove("hidden");
+    for (var i = 0; i < files.length; i++) {
+      var row = document.createElement("div");
+      row.className = "up";
+      row.innerHTML = '<div class="top"><b>' + esc(files[i].name) + '</b><span>' + t("waiting") + '</span></div><div class="bar"><i></i></div>';
+      $("upList").insertBefore(row, $("upList").firstChild);
+      queue.push({ file: files[i], row: row, path: path || "" });
+    }
+    if (!uploading) next();
+  }
+
+  function next() {
+    var job = queue.shift();
+    if (!job) {
+      uploading = false;
+      if (uploadedCount) toast(t("uploadedN", uploadedCount));
+      uploadedCount = 0;
+      if (view === "browse") load(curPath, false);
+      loadInfo();
+      return;
+    }
+    uploading = true;
+    var label = job.row.querySelector(".top span"), bar = job.row.querySelector(".bar i");
+    var xhr = new XMLHttpRequest();
+    xhr.open("PUT", "/api/upload?path=" + enc(job.path) + "&name=" + enc(job.file.name));
+    xhr.upload.onprogress = function (e) {
+      if (e.lengthComputable) {
+        var p = Math.round(e.loaded / e.total * 100);
+        bar.style.width = p + "%"; label.textContent = p + "% · " + fmtSize(e.total);
+      }
+    };
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        var r = {}; try { r = JSON.parse(xhr.responseText); } catch (e) {}
+        ownNames[join(job.path, r.name || job.file.name)] = 1;
+        bar.style.width = "100%"; label.textContent = "✓ " + t("done");
+        job.row.classList.add("done"); uploadedCount++;
+      } else {
+        var msg = "HTTP " + xhr.status; try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) {}
+        label.textContent = "✕ " + t("failed"); job.row.classList.add("err"); toast(t("error", msg));
+      }
+      next();
+    };
+    xhr.onerror = function () {
+      label.textContent = "✕ " + t("failed"); job.row.classList.add("err"); toast(t("offline")); next();
+    };
+    xhr.send(job.file);
+  }
+
+  $("pickFiles").onclick = function () { $("fileInput").click(); };
+  $("pickMedia").onclick = function () { $("mediaInput").click(); };
+  $("fileInput").onchange = function () { addFiles(this.files, ""); this.value = ""; };
+  $("mediaInput").onchange = function () { addFiles(this.files, ""); this.value = ""; };
+  $("upHereBtn").onclick = function () { $("hereInput").click(); };
+  $("hereInput").onchange = function () { addFiles(this.files, curPath); this.value = ""; };
+
+  var drop = $("drop");
+  ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+  drop.addEventListener("drop", function (e) { addFiles(e.dataTransfer.files, ""); });
+
+  // ---------------------------------------------------------------- browse
+  var curPath = "", items = [], known = null;
+
+  function go(path) {
+    curPath = path;
+    try { history.pushState({ v: "browse", p: path }, ""); } catch (e) {}
+    $("search").value = "";
+    load(path, false);
+  }
+
+  function load(path, silent) {
+    return api("/api/list?path=" + enc(path)).then(function (r) {
+      if (path !== curPath) return;
+      var names = {}, fresh = 0;
+      r.items.forEach(function (it) {
+        var key = join(path, it.name);
+        names[key] = 1;
+        if (silent && known && !known[key] && !ownNames[key]) fresh++;
+      });
+      if (fresh) toast(t("newFiles", fresh));
+      known = names;
+      items = r.items;
+      render();
+    }).catch(function (e) { if (!silent) toast(t("error", e.message)); });
+  }
+
+  function render() {
+    var crumbs = '<a href="#" data-p="">🏠 ' + esc(t("root")) + "</a>";
+    if (curPath) {
+      var acc = "";
+      curPath.split("/").forEach(function (part) {
+        acc = join(acc, part);
+        crumbs += ' › <a href="#" data-p="' + esc(acc) + '">' + esc(part) + "</a>";
+      });
+    }
+    $("crumbs").innerHTML = crumbs;
+    var links = $("crumbs").querySelectorAll("a");
+    for (var i = 0; i < links.length; i++) links[i].onclick = function (e) { e.preventDefault(); go(this.getAttribute("data-p")); };
+
+    var q = $("search").value.trim().toLowerCase();
+    var sort = $("sort").value;
+    var list = items.filter(function (it) { return !q || it.name.toLowerCase().indexOf(q) >= 0; });
+    list.sort(function (a, b) {
+      if (a.dir !== b.dir) return a.dir ? -1 : 1;
+      if (sort === "name") return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
+      if (sort === "size") return b.size - a.size;
+      return b.mtime - a.mtime;
+    });
+
+    var box = $("list");
+    if (!list.length) { box.innerHTML = '<div class="empty">' + esc(q ? t("nothing") : t("empty")) + "</div>"; return; }
+    box.innerHTML = list.map(function (it, idx) {
+      var meta = it.dir ? fmtDate(it.mtime) : fmtSize(it.size) + " · " + fmtDate(it.mtime);
+      return '<div class="row click" data-i="' + idx + '"><div class="ic">' + icon(it) + '</div>' +
+        '<div class="nm"><b>' + esc(it.name) + "</b><small>" + esc(meta) + "</small></div>" +
+        '<button class="more" data-m="' + idx + '">⋯</button></div>';
+    }).join("");
+    var rows = box.querySelectorAll(".row");
+    for (var r = 0; r < rows.length; r++) {
+      rows[r].onclick = function (e) {
+        var it = list[+this.getAttribute("data-i")];
+        if (e.target.classList.contains("more")) { menu(it); return; }
+        if (it.dir) go(join(curPath, it.name)); else window.open(fileUrl(it, false), "_blank");
+      };
+    }
+  }
+  $("search").oninput = render;
+  $("sort").onchange = render;
+  $("refreshBtn").onclick = function () { load(curPath, false); };
+
+  function fileUrl(it, dl) { return "/api/file?path=" + enc(join(curPath, it.name)) + (dl ? "&dl=1" : ""); }
+
+  function menu(it) {
+    var full = join(curPath, it.name);
+    var html = '<div class="title">' + icon(it) + " " + esc(it.name) + "</div>";
+    if (!it.dir) html += '<button data-a="open">' + t("open") + '</button><button data-a="dl">' + t("download") + "</button>";
+    html += '<button data-a="ren">' + t("rename") + '</button><button data-a="del" class="danger">' + t("del") + "</button>" +
+      '<button data-a="x">' + t("cancel") + "</button>";
+    $("sheet").innerHTML = html;
+    $("sheetBg").classList.add("show");
+    var btns = $("sheet").querySelectorAll("button");
+    for (var i = 0; i < btns.length; i++) btns[i].onclick = function () {
+      var a = this.getAttribute("data-a");
+      closeSheet();
+      if (a === "open") window.open(fileUrl(it, false), "_blank");
+      else if (a === "dl") { var l = document.createElement("a"); l.href = fileUrl(it, true); l.download = it.name; document.body.appendChild(l); l.click(); l.remove(); }
+      else if (a === "ren") {
+        var n = prompt(t("newName"), it.name);
+        if (n && n !== it.name) api("/api/rename?path=" + enc(full) + "&name=" + enc(n), "POST")
+          .then(function () { toast(t("renamed")); load(curPath, false); }).catch(function (e) { toast(t("error", e.message)); });
+      } else if (a === "del") {
+        if (confirm(t("confirmDel", it.name))) api("/api/delete?path=" + enc(full), "POST")
+          .then(function () { toast(t("deleted")); load(curPath, false); loadInfo(); }).catch(function (e) { toast(t("error", e.message)); });
+      }
+    };
+  }
+  function closeSheet() { $("sheetBg").classList.remove("show"); }
+  $("sheetBg").onclick = function (e) { if (e.target === this) closeSheet(); };
+
+  $("mkdirBtn").onclick = function () {
+    var n = prompt(t("newFolder"));
+    if (n) api("/api/mkdir?path=" + enc(curPath) + "&name=" + enc(n.trim()), "POST")
+      .then(function () { toast(t("created")); load(curPath, false); }).catch(function (e) { toast(t("error", e.message)); });
+  };
+
+  // live updates: refresh the open folder every few seconds
+  setInterval(function () {
+    if (view === "browse" && !document.hidden && !uploading) load(curPath, true);
+  }, 4000);
+
+  applyTheme();
+  applyLang();
+})();
+</script>
+</body>
+</html>
