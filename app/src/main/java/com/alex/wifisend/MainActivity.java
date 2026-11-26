@@ -44,6 +44,7 @@ public class MainActivity extends Activity {
     private TextView infoView;
     private Button toggle;
     private Button bgWarning;
+    private Button addrWarning;
     private String shownUrl = "";
     private boolean autoStarted;
 
@@ -164,6 +165,10 @@ public class MainActivity extends Activity {
         toggle.setOnClickListener(v -> onToggle());
         root.addView(toggle);
 
+        addrWarning = ui.button("", 2);
+        addrWarning.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
+        root.addView(addrWarning);
+
         bgWarning = ui.button(Util.t("⚠️ Разрешите работу в фоне", "⚠️ Allow background work"), 2);
         bgWarning.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         root.addView(bgWarning);
@@ -250,6 +255,13 @@ public class MainActivity extends Activity {
         boolean showQr = running && hp != null;
 
         qrCard.setVisibility(showQr ? View.VISIBLE : View.GONE);
+        String printed = Prefs.printedHost(this);
+        boolean moved = showQr && !printed.isEmpty() && !printed.equals(hp);
+        addrWarning.setVisibility(moved ? View.VISIBLE : View.GONE);
+        if (moved) {
+            addrWarning.setText(Util.t("⚠️ Адрес изменился — распечатанный QR (" + printed + ") не сработает. Нажмите, чтобы исправить",
+                    "⚠️ Address changed — the printed QR (" + printed + ") won't work. Tap to fix"));
+        }
         orText.setVisibility(showQr ? View.VISIBLE : View.GONE);
         toggle.setVisibility(access ? View.VISIBLE : View.GONE);
 

@@ -9,6 +9,8 @@ import android.text.InputType;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Toast;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -129,6 +131,70 @@ public class SettingsActivity extends Activity {
         path.setPadding(0, ui.dp(10), 0, 0);
         stor.addView(path);
         root.addView(stor);
+
+        // ---- printable QR
+        section(Util.t("🖨️ QR‑код для печати", "🖨️ QR code to print"));
+        LinearLayout pr = ui.card();
+        final String hp = ServerService.running ? Util.hostPort(ServerService.port) : null;
+        if (hp == null) {
+            pr.addView(note(Util.t("Запустите сервер и подключите планшет к Wi‑Fi.",
+                    "Start the server and connect the tablet to Wi‑Fi.")));
+        } else {
+            ImageView qv = new ImageView(this);
+            qv.setImageBitmap(MainActivity.qr("http://" + hp, 400));
+            qv.setBackgroundColor(android.graphics.Color.WHITE);
+            qv.setPadding(ui.dp(8), ui.dp(8), ui.dp(8), ui.dp(8));
+            LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(ui.dp(150), ui.dp(150));
+            qlp.gravity = Gravity.CENTER_HORIZONTAL;
+            pr.addView(qv, qlp);
+            TextView addr = ui.text(hp, 18, true, ui.accent);
+            addr.setGravity(Gravity.CENTER);
+            addr.setPadding(0, ui.dp(8), 0, 0);
+            pr.addView(addr);
+            Button save = ui.button(Util.t("💾 Сохранить QR в галерею", "💾 Save QR to gallery"), 1);
+            save.setOnClickListener(v -> {
+                boolean ok = QrPrint.saveToGallery(this, QrPrint.poster(hp),
+                        "WiFiSend-QR-" + hp.replace(':', '_') + ".png");
+                if (ok) {
+                    Prefs.setPrintedHost(this, hp);
+                }
+                Toast.makeText(this, ok
+                        ? Util.t("Сохранено в Галерею → Pictures/WiFiSend", "Saved to Gallery → Pictures/WiFiSend")
+                        : Util.t("Не удалось сохранить", "Could not save"), Toast.LENGTH_LONG).show();
+                build();
+            });
+            pr.addView(save);
+            String ip = hp.contains(":") ? hp.substring(0, hp.indexOf(':')) : hp;
+            String st = QrPrint.suggestStatic(ip);
+            TextView how = note(Util.t(
+                    "Чтобы распечатанный код всегда работал, задайте планшету постоянный адрес:\n"
+                            + "1. Настройки → Wi‑Fi → нажмите на текущую сеть → «Настройки IP» → «Статический».\n"
+                            + "2. IP‑адрес: " + st + " (как сейчас, только последнее число другое). "
+                            + "Остальные поля оставьте как есть.\n"
+                            + "3. Сохраните, вернитесь сюда и сохраните QR заново.\n"
+                            + "Выбирайте число 200–250 — так меньше шанс, что адрес занят.",
+                    "To keep a printed code working, give the tablet a fixed address:\n"
+                            + "1. Settings → Wi‑Fi → tap the current network → «IP settings» → «Static».\n"
+                            + "2. IP address: " + st + " (same as now, only the last number differs). "
+                            + "Leave the other fields as they are.\n"
+                            + "3. Save, come back here and save the QR again.\n"
+                            + "Pick 200–250 — such addresses are less likely to be taken."));
+            how.setPadding(0, ui.dp(12), 0, 0);
+            pr.addView(how);
+        }
+        String printed = Prefs.printedHost(this);
+        if (!printed.isEmpty()) {
+            TextView pt = note(Util.t("Распечатан QR для адреса: ", "Printed QR address: ") + printed);
+            pt.setPadding(0, ui.dp(10), 0, 0);
+            pr.addView(pt);
+            Button forget = ui.button(Util.t("Больше не следить за этим адресом", "Stop tracking this address"), 0);
+            forget.setOnClickListener(v -> {
+                Prefs.setPrintedHost(this, "");
+                build();
+            });
+            pr.addView(forget);
+        }
+        root.addView(pr);
 
         // ---- security
         section(Util.t("Безопасность", "Security"));

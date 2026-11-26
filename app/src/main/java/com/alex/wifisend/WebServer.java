@@ -31,6 +31,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Tiny HTTP server without external libraries.
@@ -59,6 +61,13 @@ public class WebServer {
     private final Map<String, Long> clients = new HashMap<>();
     /** client ip -> {wrong PIN attempts, blocked until (ms)} */
     private final Map<String, long[]> fails = new HashMap<>();
+    /** path|mtime -> JPEG preview */
+    private final Map<String, byte[]> thumbs = new LinkedHashMap<String, byte[]>(64, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, byte[]> e) {
+            return size() > 300;
+        }
+    };
 
     /** Number of phones / computers that used the page during the last 90 seconds. */
     public int activeClients() {
@@ -256,6 +265,12 @@ public class WebServer {
                 } else {
                     file(method, q, h, out, ip);
                 }
+                break;
+            case "/api/thumb":
+                thumb(q, out);
+                break;
+            case "/api/zip":
+                zip(q, out, ip);
                 break;
             case "/api/upload":
                 if (!method.equals("PUT") && !post) {
@@ -614,6 +629,108 @@ public class WebServer {
         scan(paths.toArray(new String[0]));
         event("✏️", oldName + " → " + nf.getName(), ip);
         sendOk(out);
+    }
+
+    private void thumb(Map<String, String> q, OutputStream out) throws Exception {
+        File f = resolve(q.get("path"));
+        if (!f.isFile()) {
+            sendError(out, 404, "not found");
+            return;
+        }
+        String key = f.getAbsolutePath() + "|" + f.lastModified();
+        byte[] data;
+        synchronized (thumbs) {
+            data = thumbs.get(key);
+        }
+        if (data == null) {
+            data = Thumbs.make(f, 160);
+            if (data == null) {
+                sendError(out, 404, "no preview");
+                return;
+            }
+            synchronized (thumbs) {
+                thumbs.put(key, data);
+            }
+        }
+        Map<String, String> h = new LinkedHashMap<>();
+        h.put("Content-Type", "image/jpeg");
+        h.put("Content-Length", String.valueOf(data.length));
+        h.put("Cache-Control", "max-age=86400");
+        writeHead(out, 200, h);
+        out.write(data);
+    }
+
+    /** Several files / folders as one ZIP archive (streamed, no temp file). */
+    private void zip(Map<String, String> q, OutputStream out, String ip) throws Exception {
+        String paths = q.get("paths");
+        List<File> files = new ArrayList<>();
+        if (paths != null) {
+            for (String p : paths.split("\n")) {
+                if (p.trim().isEmpty()) {
+                    continue;
+                }
+                File f = resolve(p);
+                if (f.exists() && !isRoot(f)) {
+                    files.add(f);
+                }
+            }
+        }
+        if (files.isEmpty()) {
+            sendError(out, 404, "nothing to download");
+            return;
+        }
+        String name;
+        if (files.size() == 1) {
+            name = files.get(0).getName() + ".zip";
+        } else {
+            name = "WiFiSend-" + new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.US)
+                    .format(new java.util.Date()) + ".zip";
+        }
+        Map<String, String> h = new LinkedHashMap<>();
+        h.put("Content-Type", "application/zip");
+        h.put("Content-Disposition", "attachment; filename*=UTF-8''" + encode(name));
+        h.put("Cache-Control", "no-store");
+        writeHead(out, 200, h);
+        ZipOutputStream zos = new ZipOutputStream(out);
+        zos.setLevel(1);
+        int[] count = {0};
+        for (File f : files) {
+            addToZip(zos, f, f.getName(), count);
+        }
+        zos.finish();
+        out.flush();
+        event("🗜️", Util.t("ZIP: файлов ", "ZIP: files ") + count[0] + " (" + name + ")", ip);
+    }
+
+    private static void addToZip(ZipOutputStream zos, File f, String entry, int[] count) throws IOException {
+        if (f.isDirectory()) {
+            zos.putNextEntry(new ZipEntry(entry + "/"));
+            zos.closeEntry();
+            File[] children = f.listFiles();
+            if (children != null) {
+                for (File c : children) {
+                    if (!c.getName().endsWith(TEMP_SUFFIX)) {
+                        addToZip(zos, c, entry + "/" + c.getName(), count);
+                    }
+                }
+            }
+            return;
+        }
+        ZipEntry ze = new ZipEntry(entry);
+        ze.setTime(f.lastModified());
+        zos.putNextEntry(ze);
+        java.io.FileInputStream in = new java.io.FileInputStream(f);
+        try {
+            byte[] buf = new byte[64 * 1024];
+            int n;
+            while ((n = in.read(buf)) > 0) {
+                zos.write(buf, 0, n);
+            }
+        } finally {
+            in.close();
+        }
+        zos.closeEntry();
+        count[0]++;
     }
 
     // ------------------------------------------------------------------ helpers

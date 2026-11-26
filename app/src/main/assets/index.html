@@ -5,122 +5,220 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WiFi Send">
-<meta name="theme-color" content="#1565c0">
+<meta name="theme-color" content="#2563eb">
 <title>WiFi Send</title>
 <style>
   :root {
-    --bg: #f4f6f9; --card: #ffffff; --text: #16202c; --muted: #6b7686;
-    --line: #e3e7ee; --accent: #1565c0; --accent-2: #2e7d32; --danger: #c62828;
-    --shadow: 0 2px 10px rgba(0,0,0,.08);
+    --bg: #f5f6f8; --card: #ffffff; --card-2: #f0f2f5; --text: #111827; --muted: #6b7280;
+    --line: #e5e7eb; --accent: #2563eb; --accent-soft: #e8efff; --green: #16a34a; --green-soft: #e7f6ec;
+    --danger: #dc2626; --shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
   }
   :root[data-theme="dark"] {
-    --bg: #0f1419; --card: #1a2129; --text: #e6edf3; --muted: #8b98a8;
-    --line: #2a333d; --accent: #5aa2f0; --accent-2: #66bb6a; --danger: #ef5350;
-    --shadow: 0 2px 10px rgba(0,0,0,.4);
+    --bg: #0d1117; --card: #161b22; --card-2: #1f2630; --text: #e6edf3; --muted: #8b949e;
+    --line: #262d36; --accent: #4f8cff; --accent-soft: #17223a; --green: #3fb950; --green-soft: #13261a;
+    --danger: #f85149; --shadow: none;
   }
   @media (prefers-color-scheme: dark) {
     :root[data-theme="auto"] {
-      --bg: #0f1419; --card: #1a2129; --text: #e6edf3; --muted: #8b98a8;
-      --line: #2a333d; --accent: #5aa2f0; --accent-2: #66bb6a; --danger: #ef5350;
-      --shadow: 0 2px 10px rgba(0,0,0,.4);
+      --bg: #0d1117; --card: #161b22; --card-2: #1f2630; --text: #e6edf3; --muted: #8b949e;
+      --line: #262d36; --accent: #4f8cff; --accent-soft: #17223a; --green: #3fb950; --green-soft: #13261a;
+      --danger: #f85149; --shadow: none;
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  button { font: inherit; color: inherit; cursor: pointer; }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); }
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0;
+    transition: transform .08s ease, opacity .08s ease, background-color .15s ease; }
+  button:active, .row.click:active, .chip-f:active { transform: scale(.96); opacity: .75; }
+  .ic { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 14px 16px calc(110px + env(safe-area-inset-bottom)); }
 
-  header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  header h1 { font-size: 20px; margin: 0; flex: 1; display: flex; align-items: center; gap: 8px; }
-  .back { border: 0; background: none; font-size: 26px; padding: 0 6px 0 0; line-height: 1; color: var(--accent); }
-  .chip { border: 1px solid var(--line); background: var(--card); border-radius: 10px;
-    padding: 6px 10px; font-size: 14px; min-width: 40px; }
-  .sub { color: var(--muted); font-size: 13px; margin: -8px 0 14px; }
+  /* headers */
+  header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; min-height: 44px; }
+  header h1 { font-size: 22px; font-weight: 700; margin: 0; flex: 1; letter-spacing: -.2px;
+    display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .logo { width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: #fff;
+    display: grid; place-items: center; flex: none; }
+  .logo .ic { width: 20px; height: 20px; }
+  .back { width: 36px; height: 40px; display: grid; place-items: center; color: var(--accent); margin-left: -8px; }
+  .back .ic { width: 26px; height: 26px; }
+  .chip { flex: none; white-space: nowrap; height: 40px; min-width: 40px; padding: 0 10px; border-radius: 12px; background: var(--card);
+    border: 1px solid var(--line); display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px; font-size: 15px; font-weight: 600; }
+  .chip.homebtn { padding: 0 14px; background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+  .chip .ic { width: 20px; height: 20px; }
+  .sub { color: var(--muted); font-size: 14px; margin: -6px 0 18px 2px; }
 
-  /* Home */
-  .home { display: grid; gap: 16px; margin-top: 8vh; }
-  .big { border: 0; border-radius: 22px; padding: 34px 20px; font-size: 24px; font-weight: 600;
-    color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px;
-    box-shadow: var(--shadow); }
-  .big span.i { font-size: 54px; line-height: 1; }
-  .big.send { background: linear-gradient(135deg, #1e88e5, #1565c0); }
-  .big.browse { background: linear-gradient(135deg, #43a047, #2e7d32); }
-  .big:active { transform: scale(.98); }
-  .free { text-align: center; color: var(--muted); font-size: 14px; margin-top: 6px; }
+  /* home */
+  .home { display: grid; gap: 14px; margin-top: 4vh; }
+  .big { border-radius: 22px; padding: 26px 22px; display: flex; align-items: center; gap: 18px; text-align: left;
+    font-size: 22px; font-weight: 700; box-shadow: var(--shadow); }
+  .big .circle { width: 60px; height: 60px; border-radius: 18px; display: grid; place-items: center; flex: none; }
+  .big .circle .ic { width: 30px; height: 30px; }
+  .big small { display: block; font-size: 14px; font-weight: 500; opacity: .75; margin-top: 2px; }
+  .big.send { background: var(--accent); color: #fff; }
+  .big.send .circle { background: rgba(255,255,255,.18); }
+  .big.browse { background: var(--card); border: 1px solid var(--line); }
+  .big.browse .circle { background: var(--green-soft); color: var(--green); }
+  .space { margin-top: 10px; padding: 14px 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+  .space .row-t { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); }
+  .meter { height: 6px; border-radius: 3px; background: var(--card-2); margin-top: 8px; overflow: hidden; }
+  .meter i { display: block; height: 100%; background: var(--accent); width: 0; }
 
-  /* Cards & lists */
-  .card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
-  .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; margin-bottom: 10px; }
-  .toolbar input { grid-column: 1 / -1; }
-  .toolbar input, .toolbar select { width: 100%; min-width: 0; padding: 9px 12px; border-radius: 10px;
-    border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; }
-  .btn { border: 0; border-radius: 10px; padding: 9px 14px; background: var(--accent); color: #fff; font-weight: 600; }
-  .btn.alt { background: var(--card); color: var(--text); border: 1px solid var(--line); }
-  .crumbs { font-size: 14px; color: var(--muted); margin: 0 2px 10px; overflow-x: auto; white-space: nowrap; }
-  .crumbs a { color: var(--accent); text-decoration: none; }
-  .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  /* toolbar */
+  .search { position: relative; margin-bottom: 10px; }
+  .search .ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 20px; height: 20px; }
+  .search input { width: 100%; padding: 11px 12px 11px 40px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); outline: none; }
+  .search input:focus { border-color: var(--accent); }
+  .tools { display: grid; grid-template-columns: minmax(0, 1fr) 44px 44px 44px; gap: 8px; margin-bottom: 10px; }
+  .tools select { width: 100%; min-width: 0; height: 44px; padding: 0 12px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--card); -webkit-appearance: none; appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 19px, calc(100% - 13px) 19px; background-size: 5px 5px; background-repeat: no-repeat; }
+  .ibtn { height: 44px; border-radius: 12px; background: var(--card); border: 1px solid var(--line);
+    display: grid; place-items: center; }
+  .ibtn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+  .ibtn.on { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+  .filters { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px 12px; padding: 0 16px 2px; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .chip-f { flex: none; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--card);
+    border: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--muted); }
+  .chip-f.on { background: var(--text); color: var(--bg); border-color: transparent; }
+  .chip-f span { opacity: .6; margin-left: 4px; font-weight: 500; }
+  .crumbs { font-size: 14px; color: var(--muted); margin: 0 2px 10px; overflow-x: auto; white-space: nowrap;
+    display: flex; align-items: center; gap: 4px; }
+  .crumbs a { color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+  .crumbs .ic { width: 16px; height: 16px; }
+
+  /* list */
+  .card { background: var(--card); border-radius: 16px; border: 1px solid var(--line); overflow: hidden; box-shadow: var(--shadow); }
+  .row { display: flex; align-items: center; gap: 12px; padding: 10px 8px 10px 12px; border-bottom: 1px solid var(--line); }
   .row:last-child { border-bottom: 0; }
-  .row .ic { font-size: 26px; width: 32px; text-align: center; flex: none; }
-  .row .nm { flex: 1; min-width: 0; }
-  .row .nm b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .row .nm small { color: var(--muted); font-size: 12px; }
-  .row .more { border: 0; background: none; font-size: 22px; padding: 4px 8px; color: var(--muted); }
   .row.click { cursor: pointer; }
-  .row.click:active { background: var(--line); }
-  .empty { padding: 40px 16px; text-align: center; color: var(--muted); }
+  .row.sel { background: var(--accent-soft); }
+  .badge { width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; flex: none;
+    color: #fff; font-size: 11px; font-weight: 800; letter-spacing: .3px; position: relative; overflow: hidden; }
+  .badge img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .badge.folder { background: #f5b301; }
+  .badge.folder .ic { width: 24px; height: 24px; stroke: #fff; }
+  .nm { flex: 1; min-width: 0; }
+  .nm b { display: block; font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nm small { color: var(--muted); font-size: 12.5px; }
+  .more { width: 40px; height: 40px; display: grid; place-items: center; color: var(--muted); border-radius: 10px; }
+  .more .ic { fill: currentColor; stroke: none; }
+  .tick { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); margin: 0 8px; flex: none;
+    display: grid; place-items: center; color: #fff; }
+  .tick .ic { width: 16px; height: 16px; stroke-width: 3; opacity: 0; }
+  .row.sel .tick { background: var(--accent); border-color: var(--accent); }
+  .row.sel .tick .ic { opacity: 1; }
+  .empty { padding: 44px 16px; text-align: center; color: var(--muted); }
+  .empty .ic { width: 40px; height: 40px; stroke-width: 1.5; display: block; margin: 0 auto 8px; opacity: .6; }
 
-  /* Send screen */
-  .drop { border: 2px dashed var(--line); border-radius: 18px; padding: 30px 16px; text-align: center;
-    background: var(--card); }
-  .drop.over { border-color: var(--accent); }
-  .drop .i { font-size: 48px; }
-  .drop p { color: var(--muted); margin: 8px 0 16px; }
-  .picks { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
-  .picks .btn { padding: 14px; font-size: 16px; }
-  .up { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  /* send */
+  .drop { border: 2px dashed var(--line); border-radius: 20px; padding: 34px 18px; text-align: center; background: var(--card); }
+  .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop .circle { width: 68px; height: 68px; border-radius: 20px; background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; margin: 0 auto; }
+  .drop .circle .ic { width: 34px; height: 34px; }
+  .drop p { color: var(--muted); margin: 12px 0 18px; }
+  .btn { height: 52px; padding: 0 22px; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 700;
+    font-size: 17px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn.wide { width: 100%; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 22px 4px 8px; font-weight: 700; }
+  .up { padding: 12px 8px 12px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
   .up:last-child { border-bottom: 0; }
+  .up .body { flex: 1; min-width: 0; }
   .up .top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
-  .up .top b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bar { height: 6px; background: var(--line); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .up .top b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .up .top span { color: var(--muted); white-space: nowrap; }
+  .bar { height: 5px; background: var(--card-2); border-radius: 3px; margin-top: 8px; overflow: hidden; }
   .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
-  .up.done .bar i { background: var(--accent-2); }
-  .up.err .bar i { background: var(--danger); }
-  h3 { font-size: 15px; color: var(--muted); margin: 18px 4px 8px; font-weight: 600; }
+  .up.done .bar i { background: var(--green); }
+  .up.err .bar i, .up.cancel .bar i { background: var(--danger); }
+  .up .x { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--muted); }
+  .up.done .x, .up.err .x, .up.cancel .x { visibility: hidden; }
 
-  /* Sheet & toast */
-  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: flex-end; justify-content: center; z-index: 10; }
+  /* bottom bars */
+  .dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom));
+    width: min(728px, calc(100% - 24px)); background: var(--text); color: var(--bg); border-radius: 18px;
+    padding: 10px 10px 10px 16px; display: flex; align-items: center; gap: 8px; z-index: 15;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  .dock .lbl { flex: 1; font-weight: 600; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dock button { height: 40px; padding: 0 12px; border-radius: 12px; background: rgba(127,127,127,.22);
+    display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; }
+  .dock button.danger { color: #ff6b6b; }
+  .dock .ic { width: 19px; height: 19px; }
+  .dock .mini { flex: 1; min-width: 0; }
+  .dock .mini .bar { background: rgba(127,127,127,.35); margin-top: 6px; }
+
+  /* sheet, toast, pin */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: flex-end; justify-content: center; z-index: 30; }
   .sheet-bg.show { display: flex; }
-  .sheet { background: var(--card); width: 100%; max-width: 520px; border-radius: 18px 18px 0 0;
-    padding: 10px 10px calc(14px + env(safe-area-inset-bottom)); }
-  .sheet .title { padding: 10px 12px 12px; font-weight: 600; word-break: break-all; border-bottom: 1px solid var(--line); }
-  .sheet button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 14px 12px; font-size: 17px; border-radius: 10px; }
-  .sheet button:active { background: var(--line); }
+  .sheet { background: var(--card); width: 100%; max-width: 520px; border-radius: 22px 22px 0 0;
+    padding: 8px 10px calc(14px + env(safe-area-inset-bottom)); }
+  .sheet .title { padding: 12px 12px 14px; font-weight: 700; word-break: break-all; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 12px; }
+  .sheet button { width: 100%; text-align: left; padding: 14px 12px; font-size: 17px; border-radius: 12px;
+    display: flex; align-items: center; gap: 14px; }
   .sheet button.danger { color: var(--danger); }
-  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(120px);
-    background: #222; color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 15px; transition: transform .25s; z-index: 20; max-width: 90%; }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .hidden { display: none !important; }
-  .pinbox { margin: 14vh auto 0; max-width: 320px; text-align: center; background: var(--card);
-    border-radius: 22px; padding: 28px 22px; box-shadow: var(--shadow); }
-  .pinbox .i { font-size: 48px; }
-  .pinbox h2 { font-size: 19px; margin: 10px 0 16px; }
+  .sheet button.cancel { justify-content: center; color: var(--muted); font-weight: 600; }
+  .toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top)); transform: translate(-50%, -120px);
+    background: var(--text); color: var(--bg); padding: 11px 18px; border-radius: 14px; font-size: 15px; font-weight: 600;
+    transition: transform .25s; z-index: 40; max-width: 90%; box-shadow: 0 6px 20px rgba(0,0,0,.2); }
+  .toast.show { transform: translate(-50%, 0); }
+  .pinbox { margin: 14vh auto 0; max-width: 330px; text-align: center; background: var(--card); border: 1px solid var(--line);
+    border-radius: 24px; padding: 30px 22px; box-shadow: var(--shadow); }
+  .pinbox .circle { width: 64px; height: 64px; border-radius: 20px; background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; margin: 0 auto; }
+  .pinbox .circle .ic { width: 30px; height: 30px; }
+  .pinbox h2 { font-size: 20px; margin: 14px 0 18px; }
   .pinbox input { width: 100%; font-size: 28px; letter-spacing: 10px; text-align: center; padding: 10px;
-    border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
-  .pinbox .btn { width: 100%; margin-top: 12px; padding: 13px; font-size: 17px; }
+    border-radius: 14px; border: 1px solid var(--line); background: var(--bg); outline: none; }
+  .pinbox .btn { margin-top: 12px; }
   .pinerr { color: var(--danger); font-size: 14px; min-height: 20px; margin-top: 10px; }
+  .spin { animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2 8.5a15 15 0 0 1 20 0"/><path d="M5 12a10 10 0 0 1 14 0"/><path d="M8.5 15.5a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H10l2 2.5h6.5A2.5 2.5 0 0 1 21 9v8.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></symbol>
+  <symbol id="i-folder-plus" viewBox="0 0 24 24"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H10l2 2.5h6.5A2.5 2.5 0 0 1 21 9v8.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><path d="M12 10.5v6M9 13.5h6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.9-3.5L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14.9 3.5L20 15"/><path d="M20 20v-5h-5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+  <symbol id="i-select" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+</svg>
+
 <div class="wrap">
 
   <!-- PIN -->
   <section id="pin" class="hidden">
     <div class="pinbox">
-      <div class="i">🔒</div>
+      <div class="circle"><svg class="ic"><use href="#i-lock"/></svg></div>
       <h2 data-t="pinTitle"></h2>
       <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off">
-      <button class="btn" id="pinBtn" data-t="pinEnter"></button>
+      <button class="btn wide" id="pinBtn" data-t="pinEnter"></button>
       <div class="pinerr" id="pinErr"></div>
     </div>
   </section>
@@ -128,61 +226,87 @@
   <!-- HOME -->
   <section id="home" class="hidden">
     <header>
-      <h1>📶 WiFi Send</h1>
-      <button class="chip" id="themeBtn" title="Theme">🌓</button>
+      <h1><span class="logo"><svg class="ic"><use href="#i-wifi"/></svg></span>&nbsp;WiFi Send</h1>
+      <button class="chip" id="themeBtn"><svg class="ic"><use id="themeIcon" href="#i-auto"/></svg></button>
       <button class="chip" id="langBtn">RU</button>
     </header>
     <div class="sub" id="device"></div>
     <div class="home">
-      <button class="big send" id="goSend"><span class="i">📤</span><span data-t="send"></span></button>
-      <button class="big browse" id="goBrowse"><span class="i">📂</span><span data-t="browse"></span></button>
-      <div class="free" id="free"></div>
+      <button class="big send" id="goSend">
+        <span class="circle"><svg class="ic"><use href="#i-upload"/></svg></span>
+        <span><span data-t="send"></span><small data-t="sendSub"></small></span>
+      </button>
+      <button class="big browse" id="goBrowse">
+        <span class="circle"><svg class="ic"><use href="#i-folder"/></svg></span>
+        <span><span data-t="browse"></span><small data-t="browseSub"></small></span>
+      </button>
+      <div class="space">
+        <div class="row-t"><span data-t="storage"></span><span id="free"></span></div>
+        <div class="meter"><i id="freeBar"></i></div>
+      </div>
     </div>
   </section>
 
   <!-- SEND -->
   <section id="send" class="hidden">
     <header>
-      <h1><button class="back" data-home>‹</button><span data-t="send"></span></h1>
+      <h1 data-t="send"></h1>
+      <button class="chip homebtn" data-home><svg class="ic"><use href="#i-home"/></svg><span data-t="homeBtn"></span></button>
     </header>
     <div class="drop" id="drop">
-      <div class="i">📤</div>
+      <div class="circle"><svg class="ic"><use href="#i-upload"/></svg></div>
       <p data-t="dropHint"></p>
-      <div class="picks">
-        <button class="btn" id="pickFiles" data-t="pickFiles"></button>
-        <button class="btn alt" id="pickMedia" data-t="pickMedia"></button>
-      </div>
+      <button class="btn" id="pickFiles"><svg class="ic"><use href="#i-file"/></svg><span data-t="pickFiles"></span></button>
     </div>
     <input type="file" id="fileInput" multiple class="hidden">
-    <input type="file" id="mediaInput" multiple accept="image/*,video/*" class="hidden">
     <h3 id="upTitle" class="hidden" data-t="uploads"></h3>
-    <div class="card" id="upList"></div>
+    <div class="card hidden" id="upList"></div>
   </section>
 
   <!-- BROWSE -->
   <section id="browse" class="hidden">
     <header>
-      <h1><button class="back" data-home>‹</button><span data-t="browse"></span></h1>
-      <button class="chip" id="refreshBtn">🔄</button>
+      <button class="back" id="upDir"><svg class="ic"><use href="#i-back"/></svg></button>
+      <h1 data-t="browse"></h1>
+      <button class="chip" id="refreshBtn"><svg class="ic" id="refreshIcon"><use href="#i-refresh"/></svg></button>
+      <button class="chip homebtn" data-home><svg class="ic"><use href="#i-home"/></svg><span data-t="homeBtn"></span></button>
     </header>
-    <div class="toolbar">
-      <input type="search" id="search">
+    <div class="search"><svg class="ic"><use href="#i-search"/></svg><input type="search" id="search"></div>
+    <div class="tools">
       <select id="sort">
-        <option value="date" data-t="sortDate"></option>
+        <option value="new" data-t="sortNew"></option>
+        <option value="old" data-t="sortOld"></option>
         <option value="name" data-t="sortName"></option>
         <option value="size" data-t="sortSize"></option>
       </select>
-      <button class="btn alt" id="mkdirBtn">📁＋</button>
-      <button class="btn" id="upHereBtn">📤</button>
+      <button class="ibtn" id="selectBtn"><svg class="ic"><use href="#i-select"/></svg></button>
+      <button class="ibtn" id="mkdirBtn"><svg class="ic"><use href="#i-folder-plus"/></svg></button>
+      <button class="ibtn primary" id="upHereBtn"><svg class="ic"><use href="#i-upload"/></svg></button>
     </div>
+    <div class="filters" id="filters"></div>
     <div class="crumbs" id="crumbs"></div>
     <div class="card" id="list"></div>
     <input type="file" id="hereInput" multiple class="hidden">
   </section>
 </div>
 
+<!-- selection dock -->
+<div class="dock hidden" id="selDock">
+  <div class="lbl" id="selLabel"></div>
+  <button id="selAll" data-t="all"></button>
+  <button id="selDl"><svg class="ic"><use href="#i-download"/></svg></button>
+  <button id="selDel" class="danger"><svg class="ic"><use href="#i-trash"/></svg></button>
+  <button id="selClose"><svg class="ic"><use href="#i-x"/></svg></button>
+</div>
+<!-- upload progress dock (visible outside of the Send screen) -->
+<div class="dock hidden" id="upDock">
+  <div class="mini"><div class="lbl" id="upDockLabel"></div><div class="bar"><i id="upDockBar"></i></div></div>
+  <button id="upDockCancel"><svg class="ic"><use href="#i-x"/></svg></button>
+</div>
+
 <div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
+<video id="awake" muted playsinline loop class="hidden"></video>
 
 <script>
 (function () {
@@ -190,31 +314,37 @@
 
   var T = {
     ru: {
-      send: "Отправить", browse: "Просмотреть", free: "Свободно: {0} из {1}",
-      dropHint: "Выберите файлы — они сразу загрузятся в папку обмена",
-      pickFiles: "📄 Файлы", pickMedia: "🖼️ Фото и видео", uploads: "Загрузки",
-      waiting: "ожидание…", done: "готово", failed: "ошибка",
-      sortDate: "Сначала новые", sortName: "По имени", sortSize: "По размеру",
-      search: "Поиск…", empty: "Папка пуста", nothing: "Ничего не найдено",
-      open: "👁️ Открыть", download: "⬇️ Скачать", rename: "✏️ Переименовать", del: "🗑️ Удалить",
+      send: "Отправить", browse: "Просмотреть", sendSub: "Файлы и фото на планшет", browseSub: "Файлы на планшете",
+      storage: "Память", free: "свободно {0} из {1}", homeBtn: "Главная",
+      dropHint: "Выберите файлы — они сразу загрузятся в папку обмена", pickFiles: "Выбрать файлы",
+      uploads: "Загрузки", waiting: "в очереди", done: "готово", failed: "ошибка", cancelled: "отменено",
+      upProgress: "Загрузка {0} из {1} · {2}%",
+      sortNew: "Сначала новые", sortOld: "Сначала старые", sortName: "По имени", sortSize: "По размеру",
+      search: "Поиск", empty: "Папка пуста", nothing: "Ничего не найдено",
+      fAll: "Все", fImg: "Фото", fVideo: "Видео", fWord: "Word", fExcel: "Excel", fPdf: "PDF", fOther: "Другое",
+      open: "Открыть", download: "Скачать", rename: "Переименовать", del: "Удалить",
       cancel: "Отмена", newFolder: "Название новой папки:", newName: "Новое имя:",
-      confirmDel: "Удалить «{0}»?", deleted: "Удалено", renamed: "Переименовано", created: "Папка создана",
-      uploadedN: "Загружено файлов: {0}", newFiles: "Новые файлы: {0}", error: "Ошибка: {0}",
-      offline: "Нет связи с планшетом", root: "WiFiSend", items: "{0} шт.",
+      confirmDel: "Удалить «{0}»?", confirmDelN: "Удалить выбранное ({0})?", deleted: "Удалено", renamed: "Переименовано",
+      created: "Папка создана", uploadedN: "Загружено файлов: {0}", newFiles: "Новые файлы: {0}", error: "Ошибка: {0}",
+      offline: "Нет связи с планшетом", root: "WiFiSend", refreshed: "Обновлено",
+      selected: "Выбрано: {0}", selectHint: "Нажмите на файлы", all: "Все", zipping: "Готовлю архив…",
       pinTitle: "Введите PIN‑код", pinEnter: "Войти", pinWrong: "Неверный PIN", pinWait: "Слишком много попыток. Подождите {0} с"
     },
     en: {
-      send: "Send", browse: "Browse", free: "Free: {0} of {1}",
-      dropHint: "Pick files — they upload straight to the shared folder",
-      pickFiles: "📄 Files", pickMedia: "🖼️ Photos & videos", uploads: "Uploads",
-      waiting: "waiting…", done: "done", failed: "failed",
-      sortDate: "Newest first", sortName: "By name", sortSize: "By size",
-      search: "Search…", empty: "Folder is empty", nothing: "Nothing found",
-      open: "👁️ Open", download: "⬇️ Download", rename: "✏️ Rename", del: "🗑️ Delete",
+      send: "Send", browse: "Browse", sendSub: "Files & photos to the tablet", browseSub: "Files on the tablet",
+      storage: "Storage", free: "{0} free of {1}", homeBtn: "Home",
+      dropHint: "Pick files — they upload straight to the shared folder", pickFiles: "Choose files",
+      uploads: "Uploads", waiting: "queued", done: "done", failed: "failed", cancelled: "cancelled",
+      upProgress: "Uploading {0} of {1} · {2}%",
+      sortNew: "Newest first", sortOld: "Oldest first", sortName: "By name", sortSize: "By size",
+      search: "Search", empty: "Folder is empty", nothing: "Nothing found",
+      fAll: "All", fImg: "Photos", fVideo: "Video", fWord: "Word", fExcel: "Excel", fPdf: "PDF", fOther: "Other",
+      open: "Open", download: "Download", rename: "Rename", del: "Delete",
       cancel: "Cancel", newFolder: "New folder name:", newName: "New name:",
-      confirmDel: "Delete “{0}”?", deleted: "Deleted", renamed: "Renamed", created: "Folder created",
-      uploadedN: "Files uploaded: {0}", newFiles: "New files: {0}", error: "Error: {0}",
-      offline: "Can't reach the tablet", root: "WiFiSend", items: "{0} items",
+      confirmDel: "Delete “{0}”?", confirmDelN: "Delete selected ({0})?", deleted: "Deleted", renamed: "Renamed",
+      created: "Folder created", uploadedN: "Files uploaded: {0}", newFiles: "New files: {0}", error: "Error: {0}",
+      offline: "Can't reach the tablet", root: "WiFiSend", refreshed: "Refreshed",
+      selected: "Selected: {0}", selectHint: "Tap files", all: "All", zipping: "Preparing archive…",
       pinTitle: "Enter PIN code", pinEnter: "Enter", pinWrong: "Wrong PIN", pinWait: "Too many attempts. Wait {0} s"
     }
   };
@@ -223,6 +353,7 @@
   var lang = store("ws_lang") || "ru";
   var theme = store("ws_theme") || "auto";
   var $ = function (id) { return document.getElementById(id); };
+  document.addEventListener("touchstart", function () {}, { passive: true }); // enables :active on iOS
 
   function t(key) {
     var s = (T[lang] && T[lang][key]) || T.ru[key] || key;
@@ -232,6 +363,7 @@
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function enc(s) { return encodeURIComponent(s); }
   function join(a, b) { return a ? a + "/" + b : b; }
+  function icon(id) { return '<svg class="ic"><use href="#i-' + id + '"/></svg>'; }
   function fmtSize(b) {
     if (b < 1024) return b + " B";
     var u = ["KB", "MB", "GB", "TB"], i = -1;
@@ -243,19 +375,40 @@
     try { return d.toLocaleString(lang === "ru" ? "ru-RU" : "en-GB", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }); }
     catch (e) { return d.toLocaleString(); }
   }
-  function icon(it) {
-    if (it.dir) return "📁";
-    var e = (it.name.split(".").pop() || "").toLowerCase();
-    if (/^(jpe?g|png|gif|heic|heif|webp|bmp|svg)$/.test(e)) return "🖼️";
-    if (/^(mp4|mov|m4v|avi|mkv|webm|3gp)$/.test(e)) return "🎬";
-    if (/^(mp3|m4a|aac|wav|ogg|flac|opus)$/.test(e)) return "🎵";
-    if (e === "pdf") return "📕";
-    if (/^(docx?|odt|rtf|txt|md)$/.test(e)) return "📝";
-    if (/^(xlsx?|ods|csv)$/.test(e)) return "📊";
-    if (/^(pptx?|odp)$/.test(e)) return "📽️";
-    if (/^(zip|rar|7z|tar|gz)$/.test(e)) return "🗜️";
-    if (e === "apk") return "🤖";
-    return "📄";
+
+  // file types -------------------------------------------------------------
+  var TYPES = {
+    img: /^(jpe?g|png|gif|heic|heif|webp|bmp|svg|tiff?)$/,
+    video: /^(mp4|mov|m4v|avi|mkv|webm|3gp)$/,
+    word: /^(docx?|odt|rtf|pages)$/,
+    excel: /^(xlsx?|xlsm|ods|csv|numbers)$/,
+    pdf: /^pdf$/
+  };
+  var COLORS = { img: "#8b5cf6", video: "#db2777", word: "#2b6cde", excel: "#1f9d55", pdf: "#e5484d",
+    audio: "#0ea5e9", ppt: "#f07a24", zip: "#64748b", text: "#475569", apk: "#16a34a", other: "#6b7280" };
+  function ext(name) { var i = name.lastIndexOf("."); return i > 0 ? name.slice(i + 1).toLowerCase() : ""; }
+  function typeOf(it) {
+    if (it.dir) return "dir";
+    var e = ext(it.name);
+    for (var k in TYPES) if (TYPES[k].test(e)) return k;
+    return "other";
+  }
+  function colorOf(it) {
+    var ty = typeOf(it), e = ext(it.name);
+    if (COLORS[ty] && ty !== "other") return COLORS[ty];
+    if (/^(mp3|m4a|aac|wav|ogg|flac|opus)$/.test(e)) return COLORS.audio;
+    if (/^(pptx?|odp|key)$/.test(e)) return COLORS.ppt;
+    if (/^(zip|rar|7z|tar|gz)$/.test(e)) return COLORS.zip;
+    if (/^(txt|md|log|json|xml)$/.test(e)) return COLORS.text;
+    if (e === "apk") return COLORS.apk;
+    return COLORS.other;
+  }
+  function badge(it, full) {
+    if (it.dir) return '<div class="badge folder">' + icon("folder") + "</div>";
+    var e = ext(it.name).toUpperCase().slice(0, 4) || "FILE";
+    var img = typeOf(it) === "img"
+      ? '<img loading="lazy" alt="" src="/api/thumb?path=' + enc(full) + "&v=" + it.mtime + '" onerror="this.remove()">' : "";
+    return '<div class="badge" style="background:' + colorOf(it) + '">' + esc(e) + img + "</div>";
   }
 
   var toastTimer;
@@ -263,7 +416,7 @@
     var el = $("toast");
     el.textContent = msg; el.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2600);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2200);
   }
 
   function api(url, method) {
@@ -276,7 +429,7 @@
     });
   }
 
-  // ---------------------------------------------------------------- i18n / theme
+  // i18n / theme ---------------------------------------------------------------
   function applyLang() {
     document.documentElement.lang = lang;
     $("langBtn").textContent = lang.toUpperCase();
@@ -288,7 +441,7 @@
   }
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", theme);
-    $("themeBtn").textContent = theme === "auto" ? "🌓" : theme === "dark" ? "🌙" : "☀️";
+    $("themeIcon").setAttribute("href", theme === "auto" ? "#i-auto" : theme === "dark" ? "#i-moon" : "#i-sun");
   }
   $("langBtn").onclick = function () { lang = lang === "ru" ? "en" : "ru"; store("ws_lang", lang); applyLang(); };
   $("themeBtn").onclick = function () {
@@ -296,14 +449,16 @@
     store("ws_theme", theme); applyTheme();
   };
 
-  // ---------------------------------------------------------------- navigation
+  // navigation -------------------------------------------------------------------
   var view = "home";
   function show(v, push) {
     view = v;
     ["pin", "home", "send", "browse"].forEach(function (s) { $(s).classList.toggle("hidden", s !== v); });
     if (push !== false) { try { history.pushState({ v: v, p: curPath }, ""); } catch (e) {} }
+    if (v !== "browse") setSelecting(false);
     if (v === "browse") load(curPath, false);
     if (v === "home") loadInfo();
+    updateDock();
     window.scrollTo(0, 0);
   }
   window.addEventListener("popstate", function (e) {
@@ -314,80 +469,131 @@
   try { history.replaceState({ v: "home" }, ""); } catch (e) {}
   $("goSend").onclick = function () { show("send"); };
   $("goBrowse").onclick = function () { curPath = ""; show("browse"); };
-  var backs = document.querySelectorAll("[data-home]");
-  for (var b = 0; b < backs.length; b++) backs[b].onclick = function () {
-    if (view === "browse" && curPath) { var p = curPath.split("/"); p.pop(); go(p.join("/")); }
-    else show("home");
+  var homes = document.querySelectorAll("[data-home]");
+  for (var h = 0; h < homes.length; h++) homes[h].onclick = function () { curPath = ""; show("home"); };
+  $("upDir").onclick = function () {
+    if (curPath) { var p = curPath.split("/"); p.pop(); go(p.join("/")); } else show("home");
   };
 
   function loadInfo() {
     api("/api/info").then(function (i) {
-      $("device").textContent = i.device + " · 📁 " + i.folder;
+      $("device").textContent = i.device + " · " + i.folder;
       $("free").textContent = t("free", fmtSize(i.free), fmtSize(i.total));
+      $("freeBar").style.width = (i.total ? Math.round((1 - i.free / i.total) * 100) : 0) + "%";
     }).catch(function () { $("free").textContent = t("offline"); });
   }
 
-  // ---------------------------------------------------------------- upload
-  var queue = [], uploading = false, uploadedCount = 0, ownNames = {};
+  // keep the iPhone screen on while uploading -------------------------------------------
+  var awakeLock = null, awakeVideo = $("awake");
+  awakeVideo.src = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMpbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAB9AAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAlN0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAB9AAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAfQAAAAAAABAAAAAAHLbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAgABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABdm1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAATZzdGJsAAAAtnN0c2QAAAAAAAAAAQAAAKZhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAALGF2Y0MBQsAK/+EAFWdCwAraewEQAAADABAAAAMAIPEiagEABGjOPIAAAAAQcGFzcAAAAAEAAAABAAAAFGJ0cnQAAAAAAAAKZAAACmQAAAAYc3R0cwAAAAAAAAABAAAAAgAAQAAAAAAUc3RzcwAAAAAAAAABAAAAAQAAABxzdHNjAAAAAAAAAAEAAAABAAAAAgAAAAEAAAAcc3RzegAAAAAAAAAAAAAAAgAAApAAAAAJAAAAFHN0Y28AAAAAAAAAAQAAA1kAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjYwLjE2LjEwMAAAAAhmcmVlAAACoW1kYXQAAAJ6BgX//3bcRem95tlIt5Ys2CDZI+7veDI2NCAtIGNvcmUgMTY0IHIzMTA4IDMxZTE5ZjkgLSBILjI2NC9NUEVHLTQgQVZDIGNvZGVjIC0gQ29weWxlZnQgMjAwMy0yMDIzIC0gaHR0cDovL3d3dy52aWRlb2xhbi5vcmcveDI2NC5odG1sIC0gb3B0aW9uczogY2FiYWM9MCByZWY9MSBkZWJsb2NrPTE6MDowIGFuYWx5c2U9MHgxOjB4MSBtZT1oZXggc3VibWU9MiBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0wIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MCA4eDhkY3Q9MCBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0wIHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgc3RpdGNoYWJsZT0xIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0wIHdlaWdodHA9MCBrZXlpbnQ9MjUwIGtleWludF9taW49MSBzY2VuZWN1dD00MCBpbnRyYV9yZWZyZXNoPTAgcmNfbG9va2FoZWFkPTEwIHJjPWNyZiBtYnRyZWU9MSBjcmY9MjMuMCBxY29tcD0wLjYwIHFwbWluPTAgcXBtYXg9NjkgcXBzdGVwPTQgaXBfcmF0aW89MS40MCBhcT0xOjEuMDAAgAAAAA5liIQGf///D0UAAU9/gAAAAAVBmiAY9Q==";
+  function keepAwake(on) {
+    if (on) {
+      if (navigator.wakeLock && window.isSecureContext) {
+        navigator.wakeLock.request("screen").then(function (l) { awakeLock = l; }).catch(function () {});
+      }
+      var p = awakeVideo.play(); if (p && p.catch) p.catch(function () {});
+    } else {
+      if (awakeLock) { try { awakeLock.release(); } catch (e) {} awakeLock = null; }
+      try { awakeVideo.pause(); } catch (e) {}
+    }
+  }
+
+  // upload -----------------------------------------------------------------------------
+  var queue = [], uploading = false, uploadedCount = 0, ownNames = {}, current = null, total = 0, doneN = 0;
 
   function addFiles(files, path) {
     if (!files || !files.length) return;
     $("upTitle").classList.remove("hidden");
+    $("upList").classList.remove("hidden");
     for (var i = 0; i < files.length; i++) {
       var row = document.createElement("div");
       row.className = "up";
-      row.innerHTML = '<div class="top"><b>' + esc(files[i].name) + '</b><span>' + t("waiting") + '</span></div><div class="bar"><i></i></div>';
+      row.innerHTML = '<div class="body"><div class="top"><b>' + esc(files[i].name) + "</b><span>" + t("waiting") +
+        '</span></div><div class="bar"><i></i></div></div><button class="x">' + icon("x") + "</button>";
       $("upList").insertBefore(row, $("upList").firstChild);
-      queue.push({ file: files[i], row: row, path: path || "" });
+      var job = { file: files[i], row: row, path: path || "", state: "queued" };
+      row.querySelector(".x").onclick = cancelJob.bind(null, job);
+      queue.push(job); total++;
     }
-    if (!uploading) next();
+    if (!uploading) { keepAwake(true); next(); }
+    updateDock();
+  }
+
+  function cancelJob(job) {
+    if (job.state === "queued") {
+      queue.splice(queue.indexOf(job), 1);
+      finish(job, "cancel", t("cancelled")); total--;
+      updateDock();
+    } else if (job.state === "active" && job.xhr) {
+      job.xhr.abort();
+    }
+  }
+  function cancelAll() {
+    queue.slice().forEach(cancelJob);
+    if (current) cancelJob(current);
+  }
+  function finish(job, cls, text) {
+    job.state = cls;
+    job.row.classList.add(cls === "ok" ? "done" : cls);
+    job.row.querySelector(".top span").textContent = text;
+    if (cls === "ok") job.row.querySelector(".bar i").style.width = "100%";
   }
 
   function next() {
     var job = queue.shift();
     if (!job) {
-      uploading = false;
+      uploading = false; current = null;
+      keepAwake(false);
       if (uploadedCount) toast(t("uploadedN", uploadedCount));
-      uploadedCount = 0;
+      uploadedCount = 0; total = 0; doneN = 0;
       if (view === "browse") load(curPath, false);
-      loadInfo();
+      loadInfo(); updateDock();
       return;
     }
-    uploading = true;
+    uploading = true; current = job; job.state = "active";
     var label = job.row.querySelector(".top span"), bar = job.row.querySelector(".bar i");
-    var xhr = new XMLHttpRequest();
+    var xhr = new XMLHttpRequest(); job.xhr = xhr;
     xhr.open("PUT", "/api/upload?path=" + enc(job.path) + "&name=" + enc(job.file.name));
     xhr.upload.onprogress = function (e) {
       if (e.lengthComputable) {
-        var p = Math.round(e.loaded / e.total * 100);
-        bar.style.width = p + "%"; label.textContent = p + "% · " + fmtSize(e.total);
+        job.pct = Math.round(e.loaded / e.total * 100);
+        bar.style.width = job.pct + "%"; label.textContent = job.pct + "% · " + fmtSize(e.total);
+        updateDock();
       }
     };
     xhr.onload = function () {
+      doneN++;
       if (xhr.status >= 200 && xhr.status < 300) {
         var r = {}; try { r = JSON.parse(xhr.responseText); } catch (e) {}
         ownNames[join(job.path, r.name || job.file.name)] = 1;
-        bar.style.width = "100%"; label.textContent = "✓ " + t("done");
-        job.row.classList.add("done"); uploadedCount++;
+        finish(job, "ok", "✓ " + t("done")); uploadedCount++;
       } else if (xhr.status === 401) {
-        label.textContent = "✕ " + t("failed"); job.row.classList.add("err");
-        queue = []; uploading = false; askPin(); return;
+        finish(job, "err", t("failed")); queue.forEach(function (q) { finish(q, "cancel", t("cancelled")); });
+        queue = []; uploading = false; current = null; keepAwake(false); updateDock(); askPin(); return;
       } else {
         var msg = "HTTP " + xhr.status; try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) {}
-        label.textContent = "✕ " + t("failed"); job.row.classList.add("err"); toast(t("error", msg));
+        finish(job, "err", t("failed")); toast(t("error", msg));
       }
       next();
     };
-    xhr.onerror = function () {
-      label.textContent = "✕ " + t("failed"); job.row.classList.add("err"); toast(t("offline")); next();
-    };
+    xhr.onerror = function () { doneN++; finish(job, "err", t("failed")); toast(t("offline")); next(); };
+    xhr.onabort = function () { doneN++; finish(job, "cancel", t("cancelled")); next(); };
     xhr.send(job.file);
   }
 
+  function updateDock() {
+    var showUp = uploading && view !== "send";
+    $("upDock").classList.toggle("hidden", !showUp || selecting);
+    if (showUp) {
+      var pct = current && current.pct ? current.pct : 0;
+      $("upDockLabel").textContent = t("upProgress", Math.min(doneN + 1, total), total, pct);
+      $("upDockBar").style.width = (total ? Math.round((doneN + pct / 100) / total * 100) : 0) + "%";
+    }
+  }
+  $("upDockCancel").onclick = cancelAll;
+
   $("pickFiles").onclick = function () { $("fileInput").click(); };
-  $("pickMedia").onclick = function () { $("mediaInput").click(); };
   $("fileInput").onchange = function () { addFiles(this.files, ""); this.value = ""; };
-  $("mediaInput").onchange = function () { addFiles(this.files, ""); this.value = ""; };
   $("upHereBtn").onclick = function () { $("hereInput").click(); };
   $("hereInput").onchange = function () { addFiles(this.files, curPath); this.value = ""; };
 
@@ -396,17 +602,23 @@
   ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
   drop.addEventListener("drop", function (e) { addFiles(e.dataTransfer.files, ""); });
 
-  // ---------------------------------------------------------------- browse
-  var curPath = "", items = [], known = null;
+  // browse -------------------------------------------------------------------------------
+  var curPath = "", items = [], known = null, shown = [];
+  var sortMode = store("ws_sort") || "new";
+  var filter = store("ws_filter") || "all";
+  var selecting = false, selected = {};
+  $("sort").value = sortMode;
 
   function go(path) {
     curPath = path;
     try { history.pushState({ v: "browse", p: path }, ""); } catch (e) {}
     $("search").value = "";
+    setSelecting(false);
     load(path, false);
   }
 
-  function load(path, silent) {
+  function load(path, silent, spin) {
+    if (spin) $("refreshIcon").classList.add("spin");
     return api("/api/list?path=" + enc(path)).then(function (r) {
       if (path !== curPath) return;
       var names = {}, fresh = 0;
@@ -419,11 +631,32 @@
       known = names;
       items = r.items;
       render();
-    }).catch(function (e) { if (!silent) toast(t("error", e.message)); });
+      if (spin) toast(t("refreshed"));
+    }).catch(function (e) { if (!silent && e.message !== "PIN") toast(t("error", e.message)); })
+      .then(function () { setTimeout(function () { $("refreshIcon").classList.remove("spin"); }, 300); });
+  }
+
+  function renderFilters() {
+    var counts = { all: 0, img: 0, video: 0, word: 0, excel: 0, pdf: 0, other: 0 };
+    items.forEach(function (it) { if (!it.dir) { counts.all++; counts[typeOf(it)]++; } });
+    if (filter !== "all" && !counts[filter]) filter = "all";
+    var keys = [["all", "fAll"], ["img", "fImg"], ["video", "fVideo"], ["word", "fWord"], ["excel", "fExcel"], ["pdf", "fPdf"], ["other", "fOther"]];
+    var html = "";
+    keys.forEach(function (k) {
+      if (k[0] !== "all" && !counts[k[0]]) return;
+      html += '<button class="chip-f' + (filter === k[0] ? " on" : "") + '" data-f="' + k[0] + '">' + esc(t(k[1])) +
+        (counts[k[0]] ? "<span>" + counts[k[0]] + "</span>" : "") + "</button>";
+    });
+    $("filters").innerHTML = html;
+    $("filters").classList.toggle("hidden", counts.all === 0);
+    var bs = $("filters").querySelectorAll("button");
+    for (var i = 0; i < bs.length; i++) bs[i].onclick = function () {
+      filter = this.getAttribute("data-f"); store("ws_filter", filter); render();
+    };
   }
 
   function render() {
-    var crumbs = '<a href="#" data-p="">🏠 ' + esc(t("root")) + "</a>";
+    var crumbs = '<a href="#" data-p="">' + icon("home") + esc(t("root")) + "</a>";
     if (curPath) {
       var acc = "";
       curPath.split("/").forEach(function (part) {
@@ -435,54 +668,118 @@
     var links = $("crumbs").querySelectorAll("a");
     for (var i = 0; i < links.length; i++) links[i].onclick = function (e) { e.preventDefault(); go(this.getAttribute("data-p")); };
 
+    renderFilters();
     var q = $("search").value.trim().toLowerCase();
-    var sort = $("sort").value;
-    var list = items.filter(function (it) { return !q || it.name.toLowerCase().indexOf(q) >= 0; });
+    var list = items.filter(function (it) {
+      if (q && it.name.toLowerCase().indexOf(q) < 0) return false;
+      if (filter !== "all" && typeOf(it) !== filter) return false;
+      return true;
+    });
     list.sort(function (a, b) {
       if (a.dir !== b.dir) return a.dir ? -1 : 1;
-      if (sort === "name") return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
-      if (sort === "size") return b.size - a.size;
+      if (sortMode === "name") return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
+      if (sortMode === "size") return b.size - a.size;
+      if (sortMode === "old") return a.mtime - b.mtime;
       return b.mtime - a.mtime;
     });
+    shown = list;
 
     var box = $("list");
-    if (!list.length) { box.innerHTML = '<div class="empty">' + esc(q ? t("nothing") : t("empty")) + "</div>"; return; }
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">' + icon(q || filter !== "all" ? "search" : "folder") + esc(q || filter !== "all" ? t("nothing") : t("empty")) + "</div>";
+      updateSel();
+      return;
+    }
     box.innerHTML = list.map(function (it, idx) {
+      var full = join(curPath, it.name);
       var meta = it.dir ? fmtDate(it.mtime) : fmtSize(it.size) + " · " + fmtDate(it.mtime);
-      return '<div class="row click" data-i="' + idx + '"><div class="ic">' + icon(it) + '</div>' +
-        '<div class="nm"><b>' + esc(it.name) + "</b><small>" + esc(meta) + "</small></div>" +
-        '<button class="more" data-m="' + idx + '">⋯</button></div>';
+      var right = selecting ? '<div class="tick">' + icon("check") + "</div>"
+        : '<button class="more" data-m="' + idx + '">' + icon("more") + "</button>";
+      return '<div class="row click' + (selected[full] ? " sel" : "") + '" data-i="' + idx + '">' + badge(it, full) +
+        '<div class="nm"><b>' + esc(it.name) + "</b><small>" + esc(meta) + "</small></div>" + right + "</div>";
     }).join("");
     var rows = box.querySelectorAll(".row");
     for (var r = 0; r < rows.length; r++) {
       rows[r].onclick = function (e) {
-        var it = list[+this.getAttribute("data-i")];
-        if (e.target.classList.contains("more")) { menu(it); return; }
-        if (it.dir) go(join(curPath, it.name)); else window.open(fileUrl(it, false), "_blank");
+        var it = list[+this.getAttribute("data-i")], full = join(curPath, it.name);
+        if (selecting) {
+          if (selected[full]) delete selected[full]; else selected[full] = it;
+          this.classList.toggle("sel", !!selected[full]); updateSel(); return;
+        }
+        if (e.target.closest && e.target.closest(".more")) { menu(it); return; }
+        if (it.dir) go(full); else window.open(fileUrl(full, false), "_blank");
       };
     }
+    updateSel();
   }
   $("search").oninput = render;
-  $("sort").onchange = render;
-  $("refreshBtn").onclick = function () { load(curPath, false); };
+  $("sort").onchange = function () { sortMode = this.value; store("ws_sort", sortMode); render(); };
+  $("refreshBtn").onclick = function () { load(curPath, false, true); };
 
-  function fileUrl(it, dl) { return "/api/file?path=" + enc(join(curPath, it.name)) + (dl ? "&dl=1" : ""); }
+  function fileUrl(full, dl) { return "/api/file?path=" + enc(full) + (dl ? "&dl=1" : ""); }
+  function downloadUrl(url, name) {
+    var l = document.createElement("a"); l.href = url; if (name) l.download = name;
+    document.body.appendChild(l); l.click(); l.remove();
+  }
 
+  // selection mode ---------------------------------------------------------------------------
+  function setSelecting(on) {
+    selecting = on; selected = {};
+    $("selectBtn").classList.toggle("on", on);
+    if (view === "browse") render();
+    updateSel();
+  }
+  function updateSel() {
+    var n = Object.keys(selected).length;
+    $("selDock").classList.toggle("hidden", !selecting);
+    $("selLabel").textContent = n ? t("selected", n) : t("selectHint");
+    $("selDl").disabled = !n; $("selDel").disabled = !n;
+    $("selDl").style.opacity = n ? 1 : .4; $("selDel").style.opacity = n ? 1 : .4;
+    updateDock();
+  }
+  $("selectBtn").onclick = function () { setSelecting(!selecting); };
+  $("selClose").onclick = function () { setSelecting(false); };
+  $("selAll").onclick = function () {
+    var all = shown.every(function (it) { return selected[join(curPath, it.name)]; });
+    selected = {};
+    if (!all) shown.forEach(function (it) { selected[join(curPath, it.name)] = it; });
+    render();
+  };
+  $("selDl").onclick = function () {
+    var keys = Object.keys(selected);
+    if (!keys.length) return;
+    if (keys.length === 1 && !selected[keys[0]].dir) { downloadUrl(fileUrl(keys[0], true), selected[keys[0]].name); }
+    else { toast(t("zipping")); downloadUrl("/api/zip?paths=" + enc(keys.join("\n"))); }
+    setSelecting(false);
+  };
+  $("selDel").onclick = function () {
+    var keys = Object.keys(selected);
+    if (!keys.length || !confirm(t("confirmDelN", keys.length))) return;
+    var chain = Promise.resolve();
+    keys.forEach(function (k) { chain = chain.then(function () { return api("/api/delete?path=" + enc(k), "POST"); }); });
+    chain.then(function () { toast(t("deleted")); }).catch(function (e) { toast(t("error", e.message)); })
+      .then(function () { setSelecting(false); load(curPath, false); loadInfo(); });
+  };
+
+  // item menu ---------------------------------------------------------------------------------
   function menu(it) {
     var full = join(curPath, it.name);
-    var html = '<div class="title">' + icon(it) + " " + esc(it.name) + "</div>";
-    if (!it.dir) html += '<button data-a="open">' + t("open") + '</button><button data-a="dl">' + t("download") + "</button>";
-    html += '<button data-a="ren">' + t("rename") + '</button><button data-a="del" class="danger">' + t("del") + "</button>" +
-      '<button data-a="x">' + t("cancel") + "</button>";
+    var html = '<div class="title">' + badge(it, full) + "<span>" + esc(it.name) + "</span></div>";
+    if (!it.dir) html += '<button data-a="open">' + icon("eye") + t("open") + '</button><button data-a="dl">' + icon("download") + t("download") + "</button>";
+    else html += '<button data-a="dl">' + icon("download") + t("download") + " (ZIP)</button>";
+    html += '<button data-a="ren">' + icon("pencil") + t("rename") + '</button><button data-a="del" class="danger">' + icon("trash") + t("del") + "</button>" +
+      '<button data-a="x" class="cancel">' + t("cancel") + "</button>";
     $("sheet").innerHTML = html;
     $("sheetBg").classList.add("show");
     var btns = $("sheet").querySelectorAll("button");
     for (var i = 0; i < btns.length; i++) btns[i].onclick = function () {
       var a = this.getAttribute("data-a");
       closeSheet();
-      if (a === "open") window.open(fileUrl(it, false), "_blank");
-      else if (a === "dl") { var l = document.createElement("a"); l.href = fileUrl(it, true); l.download = it.name; document.body.appendChild(l); l.click(); l.remove(); }
-      else if (a === "ren") {
+      if (a === "open") window.open(fileUrl(full, false), "_blank");
+      else if (a === "dl") {
+        if (it.dir) { toast(t("zipping")); downloadUrl("/api/zip?paths=" + enc(full)); }
+        else downloadUrl(fileUrl(full, true), it.name);
+      } else if (a === "ren") {
         var n = prompt(t("newName"), it.name);
         if (n && n !== it.name) api("/api/rename?path=" + enc(full) + "&name=" + enc(n), "POST")
           .then(function () { toast(t("renamed")); load(curPath, false); }).catch(function (e) { toast(t("error", e.message)); });
@@ -501,12 +798,12 @@
       .then(function () { toast(t("created")); load(curPath, false); }).catch(function (e) { toast(t("error", e.message)); });
   };
 
-  // live updates: refresh the open folder every few seconds
+  // live updates of the open folder
   setInterval(function () {
-    if (view === "browse" && !document.hidden && !uploading) load(curPath, true);
+    if (view === "browse" && !document.hidden && !uploading && !selecting) load(curPath, true);
   }, 4000);
 
-  // ---------------------------------------------------------------- PIN
+  // PIN -----------------------------------------------------------------------------------------
   function askPin() {
     if (view === "pin") return;
     show("pin", false);

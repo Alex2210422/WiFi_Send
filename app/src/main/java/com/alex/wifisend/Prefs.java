@@ -93,6 +93,15 @@ public final class Prefs {
         sp(c).edit().putBoolean("dimScreen", v).apply();
     }
 
+    /** Address encoded in the printed QR code ("10.0.2.200:8080"), "" = never printed. */
+    public static String printedHost(Context c) {
+        return sp(c).getString("printedHost", "");
+    }
+
+    public static void setPrintedHost(Context c, String v) {
+        sp(c).edit().putString("printedHost", v).apply();
+    }
+
     /** True after the user pressed «Stop» — then we don't restart by ourselves. */
     public static boolean userStopped(Context c) {
         return sp(c).getBoolean("userStopped", false);
