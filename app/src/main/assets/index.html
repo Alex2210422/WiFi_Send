@@ -108,6 +108,9 @@
   .nm { flex: 1; min-width: 0; }
   .nm b { display: block; font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .nm small { color: var(--muted); font-size: 12.5px; }
+  .del { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none;
+    color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+  .del .ic { width: 18px; height: 18px; }
   .more { width: 40px; height: 40px; display: grid; place-items: center; color: var(--muted); border-radius: 10px; }
   .more .ic { fill: currentColor; stroke: none; }
   .tick { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); margin: 0 8px; flex: none;
@@ -236,7 +239,7 @@
         <span class="circle"><svg class="ic"><use href="#i-upload"/></svg></span>
         <span><span data-t="send"></span><small data-t="sendSub"></small></span>
       </button>
-      <button class="big browse" id="goBrowse">
+      <button class="big send" id="goBrowse">
         <span class="circle"><svg class="ic"><use href="#i-folder"/></svg></span>
         <span><span data-t="browse"></span><small data-t="browseSub"></small></span>
       </button>
@@ -694,7 +697,7 @@
       var full = join(curPath, it.name);
       var meta = it.dir ? fmtDate(it.mtime) : fmtSize(it.size) + " · " + fmtDate(it.mtime);
       var right = selecting ? '<div class="tick">' + icon("check") + "</div>"
-        : '<button class="more" data-m="' + idx + '">' + icon("more") + "</button>";
+        : '<button class="del">' + icon("trash") + '</button><button class="more" data-m="' + idx + '">' + icon("more") + "</button>";
       return '<div class="row click' + (selected[full] ? " sel" : "") + '" data-i="' + idx + '">' + badge(it, full) +
         '<div class="nm"><b>' + esc(it.name) + "</b><small>" + esc(meta) + "</small></div>" + right + "</div>";
     }).join("");
@@ -706,6 +709,7 @@
           if (selected[full]) delete selected[full]; else selected[full] = it;
           this.classList.toggle("sel", !!selected[full]); updateSel(); return;
         }
+        if (e.target.closest && e.target.closest(".del")) { removeItem(it, full); return; }
         if (e.target.closest && e.target.closest(".more")) { menu(it); return; }
         if (it.dir) go(full); else window.open(fileUrl(full, false), "_blank");
       };
@@ -788,6 +792,10 @@
           .then(function () { toast(t("deleted")); load(curPath, false); loadInfo(); }).catch(function (e) { toast(t("error", e.message)); });
       }
     };
+  }
+  function removeItem(it, full) {
+    if (confirm(t("confirmDel", it.name))) api("/api/delete?path=" + enc(full), "POST")
+      .then(function () { toast(t("deleted")); load(curPath, false); loadInfo(); }).catch(function (e) { toast(t("error", e.message)); });
   }
   function closeSheet() { $("sheetBg").classList.remove("show"); }
   $("sheetBg").onclick = function (e) { if (e.target === this) closeSheet(); };
