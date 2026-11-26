@@ -13,7 +13,7 @@ import java.util.Set;
  * Notices files that appear in the share folder from outside the web page —
  * mostly files copied from a computer over USB (MTP).
  *
- * Polls the folder tree every 2 s (inotify is unreliable for files written by
+ * Polls the folder tree every second (inotify is unreliable for files written by
  * the system MTP service on recent Android). A file is reported once its size
  * and date stopped changing, i.e. the copy has finished.
  */
@@ -24,7 +24,7 @@ public class FolderWatcher {
         void onNewFiles(List<File> files);
     }
 
-    private static final long INTERVAL = 2000;
+    private static final long INTERVAL = 1000;
     private static final int MAX_FILES = 30000;
 
     private final WebServer server;
