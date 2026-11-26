@@ -99,7 +99,7 @@
 
   /* list */
   .card { background: var(--card); border-radius: 16px; border: 1px solid var(--line); overflow: hidden; box-shadow: var(--shadow); }
-  .row { display: flex; align-items: center; gap: 12px; padding: 10px 8px 10px 12px; border-bottom: 1px solid var(--line); }
+  .row { display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 12px; border-bottom: 1px solid var(--line); }
   .row:last-child { border-bottom: 0; }
   .row.click { cursor: pointer; }
   .row.sel { background: var(--accent-soft); }
@@ -114,7 +114,12 @@
   .dl { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none;
     color: var(--accent); background: var(--accent-soft); }
   .dl .ic { width: 18px; height: 18px; }
-  .more { width: 40px; height: 40px; display: grid; place-items: center; color: var(--muted); border-radius: 10px; }
+  .more { width: 36px; height: 36px; display: grid; place-items: center; flex: none; color: var(--muted);
+    border-radius: 10px; margin-left: -4px; }
+  @media (hover: hover) { .more:hover { background: var(--card-2); color: var(--text); } }
+  .more:active { background: var(--accent-soft); color: var(--accent); }
+  .row.click:has(.more:active), .row.click:has(.dl:active) { transform: none; opacity: 1; }
+  .more .ic { width: 18px; height: 18px; }
   .more .ic { fill: currentColor; stroke: none; }
   .tick { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); margin: 0 8px; flex: none;
     display: grid; place-items: center; color: #fff; }
