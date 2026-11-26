@@ -93,6 +93,15 @@ public final class Prefs {
         sp(c).edit().putBoolean("dimScreen", v).apply();
     }
 
+    /** How long freshly uploaded files stay on the web page's home screen, seconds (0 = off). */
+    public static int recentSec(Context c) {
+        return sp(c).getInt("recentSec", 30);
+    }
+
+    public static void setRecentSec(Context c, int v) {
+        sp(c).edit().putInt("recentSec", v).apply();
+    }
+
     /** Address encoded in the printed QR code ("10.0.2.200:8080"), "" = never printed. */
     public static String printedHost(Context c) {
         return sp(c).getString("printedHost", "");

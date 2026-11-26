@@ -237,6 +237,34 @@ public class SettingsActivity extends Activity {
         look.addView(theme);
         root.addView(look);
 
+        // ---- just received
+        section(Util.t("🆕 Новые файлы на страничке", "🆕 New files on the web page"));
+        LinearLayout rec = ui.card();
+        rec.addView(ui.text(Util.t(
+                "Сколько показывать только что полученные файлы на главной странице "
+                        + "(для быстрого скачивания):",
+                "How long just‑received files stay on the home page (for quick download):"),
+                14, false, ui.muted));
+        int curRec = Prefs.recentSec(this);
+        int[] secs = {30, 300, 3600, 0};
+        String[] names = {
+                Util.t("30 секунд", "30 seconds"),
+                Util.t("5 минут", "5 minutes"),
+                Util.t("1 час", "1 hour"),
+                Util.t("Не показывать", "Off")};
+        for (int i = 0; i < secs.length; i++) {
+            final int recV = secs[i];
+            boolean on = recV == curRec;
+            Button b = ui.button((on ? "✅ " : "⬜ ") + names[i], on ? 1 : 0);
+            b.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            b.setOnClickListener(v -> {
+                Prefs.setRecentSec(this, recV);
+                build();
+            });
+            rec.addView(b);
+        }
+        root.addView(rec);
+
         // ---- journal
         section(Util.t("📜 Журнал", "📜 Journal"));
         LinearLayout log = ui.card();

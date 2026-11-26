@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="auto">
+<html lang="ru" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -17,13 +17,6 @@
     --bg: #0d1117; --card: #161b22; --card-2: #1f2630; --text: #e6edf3; --muted: #8b949e;
     --line: #262d36; --accent: #4f8cff; --accent-soft: #17223a; --green: #3fb950; --green-soft: #13261a;
     --danger: #f85149; --shadow: none;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root[data-theme="auto"] {
-      --bg: #0d1117; --card: #161b22; --card-2: #1f2630; --text: #e6edf3; --muted: #8b949e;
-      --line: #262d36; --accent: #4f8cff; --accent-soft: #17223a; --green: #3fb950; --green-soft: #13261a;
-      --danger: #f85149; --shadow: none;
-    }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
@@ -67,6 +60,16 @@
   .space .row-t { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); }
   .meter { height: 6px; border-radius: 3px; background: var(--card-2); margin-top: 8px; overflow: hidden; }
   .meter i { display: block; height: 100%; background: var(--accent); width: 0; }
+
+  .recent { margin-top: 4px; animation: pop .25s ease; }
+  .recent .head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 8px; }
+  .recent .head b { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--green); font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px; }
+  .recent .head b i { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: blink 1.4s ease infinite; }
+  .recent .head a { font-size: 14px; color: var(--accent); text-decoration: none; font-weight: 600; }
+  .recent .card { border-color: var(--green); }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes blink { 50% { opacity: .3; } }
 
   /* toolbar */
   .search { position: relative; margin-bottom: 10px; }
@@ -209,7 +212,6 @@
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
-  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
 </svg>
 
@@ -230,7 +232,7 @@
   <section id="home" class="hidden">
     <header>
       <h1><span class="logo"><svg class="ic"><use href="#i-wifi"/></svg></span>&nbsp;WiFi Send</h1>
-      <button class="chip" id="themeBtn"><svg class="ic"><use id="themeIcon" href="#i-auto"/></svg></button>
+      <button class="chip" id="themeBtn"><svg class="ic"><use id="themeIcon" href="#i-sun"/></svg></button>
       <button class="chip" id="langBtn">RU</button>
     </header>
     <div class="sub" id="device"></div>
@@ -246,6 +248,10 @@
       <div class="space">
         <div class="row-t"><span data-t="storage"></span><span id="free"></span></div>
         <div class="meter"><i id="freeBar"></i></div>
+      </div>
+      <div class="recent hidden" id="recent">
+        <div class="head"><b><i></i><span data-t="justGot"></span></b><a href="#" id="recentAll" data-t="allFiles"></a></div>
+        <div class="card" id="recentList"></div>
       </div>
     </div>
   </section>
@@ -331,6 +337,7 @@
       created: "Папка создана", uploadedN: "Загружено файлов: {0}", newFiles: "Новые файлы: {0}", error: "Ошибка: {0}",
       offline: "Нет связи с планшетом", root: "WiFiSend", refreshed: "Обновлено",
       selected: "Выбрано: {0}", selectHint: "Нажмите на файлы", all: "Все", zipping: "Готовлю архив…",
+      justGot: "Только что получено", allFiles: "Все файлы →", agoS: "{0} с назад", agoM: "{0} мин назад", agoNow: "только что",
       pinTitle: "Введите PIN‑код", pinEnter: "Войти", pinWrong: "Неверный PIN", pinWait: "Слишком много попыток. Подождите {0} с"
     },
     en: {
@@ -348,13 +355,14 @@
       created: "Folder created", uploadedN: "Files uploaded: {0}", newFiles: "New files: {0}", error: "Error: {0}",
       offline: "Can't reach the tablet", root: "WiFiSend", refreshed: "Refreshed",
       selected: "Selected: {0}", selectHint: "Tap files", all: "All", zipping: "Preparing archive…",
+      justGot: "Just received", allFiles: "All files →", agoS: "{0} s ago", agoM: "{0} min ago", agoNow: "just now",
       pinTitle: "Enter PIN code", pinEnter: "Enter", pinWrong: "Wrong PIN", pinWait: "Too many attempts. Wait {0} s"
     }
   };
 
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   var lang = store("ws_lang") || "ru";
-  var theme = store("ws_theme") || "auto";
+  var theme = store("ws_theme") === "dark" ? "dark" : "light";
   var $ = function (id) { return document.getElementById(id); };
   document.addEventListener("touchstart", function () {}, { passive: true }); // enables :active on iOS
 
@@ -444,11 +452,11 @@
   }
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", theme);
-    $("themeIcon").setAttribute("href", theme === "auto" ? "#i-auto" : theme === "dark" ? "#i-moon" : "#i-sun");
+    $("themeIcon").setAttribute("href", theme === "dark" ? "#i-moon" : "#i-sun");
   }
   $("langBtn").onclick = function () { lang = lang === "ru" ? "en" : "ru"; store("ws_lang", lang); applyLang(); };
   $("themeBtn").onclick = function () {
-    theme = theme === "auto" ? "light" : theme === "light" ? "dark" : "auto";
+    theme = theme === "dark" ? "light" : "dark";
     store("ws_theme", theme); applyTheme();
   };
 
@@ -460,7 +468,7 @@
     if (push !== false) { try { history.pushState({ v: v, p: curPath }, ""); } catch (e) {} }
     if (v !== "browse") setSelecting(false);
     if (v === "browse") load(curPath, false);
-    if (v === "home") loadInfo();
+    if (v === "home") { loadInfo(); loadRecent(); }
     updateDock();
     window.scrollTo(0, 0);
   }
@@ -822,6 +830,60 @@
   setInterval(function () {
     if (view === "browse" && !document.hidden && !uploading && !selecting) load(curPath, true);
   }, 4000);
+
+  // just received (home) --------------------------------------------------------------------------
+  var recentKey = "", recentHide = null;
+  function fmtAgo(sec) {
+    if (sec < 5) return t("agoNow");
+    if (sec < 60) return t("agoS", sec);
+    return t("agoM", Math.floor(sec / 60));
+  }
+  function loadRecent() {
+    api("/api/recent").then(function (r) {
+      var box = $("recent"), list = r.items || [];
+      clearTimeout(recentHide);
+      if (!list.length) { box.classList.add("hidden"); recentKey = ""; return; }
+      recentHide = setTimeout(function () { box.classList.add("hidden"); recentKey = ""; }, r.left * 1000);
+      var key = list.map(function (it) { return it.path + it.mtime; }).join("|");
+      // only the «… ago» labels change between polls: don't rebuild (keeps thumbnails steady)
+      if (key === recentKey && !box.classList.contains("hidden")) {
+        var sm = $("recentList").querySelectorAll("small");
+        for (var k = 0; k < sm.length; k++) sm[k].textContent = fmtSize(list[k].size) + " · " + fmtAgo(list[k].ago);
+        return;
+      }
+      recentKey = key;
+      $("recentList").innerHTML = list.map(function (it, idx) {
+        return '<div class="row click" data-i="' + idx + '"' + (canDrag ? ' draggable="true"' : "") + ">" + badge(it, it.path) +
+          '<div class="nm"><b>' + esc(it.name) + "</b><small>" + esc(fmtSize(it.size) + " · " + fmtAgo(it.ago)) + "</small></div>" +
+          '<button class="dl">' + icon("download") + "</button></div>";
+      }).join("");
+      box.classList.remove("hidden");
+      var rows = $("recentList").querySelectorAll(".row");
+      for (var i = 0; i < rows.length; i++) {
+        rows[i].onclick = function (e) {
+          var it = list[+this.getAttribute("data-i")];
+          if (e.target.closest(".dl")) downloadUrl(fileUrl(it.path, true), it.name);
+          else window.open(fileUrl(it.path, false), "_blank");
+        };
+        rows[i].ondragstart = function (e) {
+          var it = list[+this.getAttribute("data-i")], url = location.origin + fileUrl(it.path, true);
+          try { e.dataTransfer.setData("DownloadURL", "application/octet-stream:" + it.name + ":" + url); } catch (x) {}
+          try { e.dataTransfer.setData("text/uri-list", url); } catch (x) {}
+          e.dataTransfer.effectAllowed = "copy";
+        };
+      }
+    }).catch(function () {});
+  }
+  $("recentAll").onclick = function (e) {
+    e.preventDefault();
+    sortMode = "new"; store("ws_sort", sortMode); $("sort").value = sortMode;
+    filter = "all"; store("ws_filter", filter);
+    curPath = ""; show("browse");
+  };
+  setInterval(function () {
+    if (view === "home" && !document.hidden) loadRecent();
+  }, 3000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && view === "home") loadRecent(); });
 
   // PIN -----------------------------------------------------------------------------------------
   function askPin() {

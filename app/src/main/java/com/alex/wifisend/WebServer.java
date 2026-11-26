@@ -69,6 +69,9 @@ public class WebServer {
         }
     };
 
+    /** Latest uploads: {relative path, upload time}. Newest last. */
+    private final List<Object[]> recent = new ArrayList<>();
+
     /** Number of phones / computers that used the page during the last 90 seconds. */
     public int activeClients() {
         long now = System.currentTimeMillis();
@@ -256,6 +259,9 @@ public class WebServer {
             case "/api/info":
                 info(out);
                 break;
+            case "/api/recent":
+                recent(out);
+                break;
             case "/api/list":
                 list(q, out);
                 break;
@@ -380,6 +386,50 @@ public class WebServer {
         o.put("folder", root.getName());
         o.put("free", root.getUsableSpace());
         o.put("total", root.getTotalSpace());
+        sendJson(out, 200, o);
+    }
+
+    /**
+     * Files uploaded a moment ago, for the «Just received» block on the home screen.
+     * The block stays while less than recentSec seconds passed since the LAST upload.
+     */
+    private void recent(OutputStream out) throws Exception {
+        int win = Prefs.recentSec(ctx);
+        long now = System.currentTimeMillis();
+        JSONObject o = new JSONObject();
+        JSONArray arr = new JSONArray();
+        long left = 0;
+        List<Object[]> copy;
+        synchronized (recent) {
+            copy = new ArrayList<>(recent);
+        }
+        if (win > 0 && !copy.isEmpty()) {
+            long last = (Long) copy.get(copy.size() - 1)[1];
+            left = last + win * 1000L - now;
+            if (left > 0) {
+                for (int i = copy.size() - 1; i >= 0 && arr.length() < 5; i--) {
+                    String rp = (String) copy.get(i)[0];
+                    File f;
+                    try {
+                        f = resolve(rp);
+                    } catch (IOException e) {
+                        continue;
+                    }
+                    if (!f.isFile()) {
+                        continue;
+                    }
+                    JSONObject it = new JSONObject();
+                    it.put("path", rp);
+                    it.put("name", f.getName());
+                    it.put("size", f.length());
+                    it.put("mtime", f.lastModified());
+                    it.put("ago", Math.max(0, (now - (Long) copy.get(i)[1]) / 1000));
+                    arr.put(it);
+                }
+            }
+        }
+        o.put("left", arr.length() > 0 ? Math.max(0, left / 1000) + 1 : 0);
+        o.put("items", arr);
         sendJson(out, 200, o);
     }
 
@@ -554,6 +604,12 @@ public class WebServer {
             throw new IOException("Cannot save file");
         }
         scan(target.getAbsolutePath());
+        synchronized (recent) {
+            recent.add(new Object[]{rel(target), System.currentTimeMillis()});
+            while (recent.size() > 20) {
+                recent.remove(0);
+            }
+        }
         if (listener != null) {
             listener.onUploaded(rel(target), len, ip);
         }
