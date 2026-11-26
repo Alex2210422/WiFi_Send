@@ -334,7 +334,7 @@ public class SettingsActivity extends Activity {
             // ignore
         }
         TextView v = ui.text("WiFi Send " + ver + "\n"
-                + Util.t("by Шитиков Александр", "by Oleksandr Shytikov")
+                + "by Oleksandr Shytikov"
                 + " · Hello from Moldova 🇲🇩", 12, false, ui.muted);
         v.setGravity(Gravity.CENTER);
         v.setPadding(0, ui.dp(18), 0, 0);
