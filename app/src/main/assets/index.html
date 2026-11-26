@@ -63,6 +63,7 @@
   .big.send .circle { background: rgba(255,255,255,.18); }
   .big.browse { background: var(--card); border: 1px solid var(--line); }
   .big.browse .circle { background: var(--green-soft); color: var(--green); }
+  .big.browse.upl .circle { background: var(--accent-soft); color: var(--accent); }
   .space { margin-top: 10px; padding: 14px 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
   .space .row-t { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); }
   .meter { height: 6px; border-radius: 3px; background: var(--card-2); margin-top: 8px; overflow: hidden; }
@@ -235,11 +236,11 @@
     </header>
     <div class="sub" id="device"></div>
     <div class="home">
-      <button class="big send" id="goSend">
+      <button class="big browse upl" id="goSend">
         <span class="circle"><svg class="ic"><use href="#i-upload"/></svg></span>
         <span><span data-t="send"></span><small data-t="sendSub"></small></span>
       </button>
-      <button class="big send" id="goBrowse">
+      <button class="big browse" id="goBrowse">
         <span class="circle"><svg class="ic"><use href="#i-folder"/></svg></span>
         <span><span data-t="browse"></span><small data-t="browseSub"></small></span>
       </button>
