@@ -40,10 +40,13 @@ import java.util.concurrent.Executors;
 public class WebServer {
 
     public interface Listener {
-        void onUploaded(String name, long size);
+        void onUploaded(String name, long size, String ip);
+
+        void onEvent(String icon, String text, String ip);
     }
 
     private static final String TEMP_SUFFIX = ".wifisend-part";
+    private static final long CLIENT_TIMEOUT_MS = 90000;
 
     private final Context ctx;
     private final File root;
@@ -52,6 +55,24 @@ public class WebServer {
     private ExecutorService pool;
     private volatile boolean running;
     private int port;
+    /** client ip -> last request time */
+    private final Map<String, Long> clients = new HashMap<>();
+    /** client ip -> {wrong PIN attempts, blocked until (ms)} */
+    private final Map<String, long[]> fails = new HashMap<>();
+
+    /** Number of phones / computers that used the page during the last 90 seconds. */
+    public int activeClients() {
+        long now = System.currentTimeMillis();
+        int n = 0;
+        synchronized (clients) {
+            for (Long t : clients.values()) {
+                if (now - t < CLIENT_TIMEOUT_MS) {
+                    n++;
+                }
+            }
+        }
+        return n;
+    }
 
     public WebServer(Context ctx, File root, Listener listener) {
         this.ctx = ctx.getApplicationContext();
@@ -159,8 +180,9 @@ public class WebServer {
                 path = target.substring(0, q);
                 query = target.substring(q + 1);
             }
+            String ip = s.getInetAddress() != null ? s.getInetAddress().getHostAddress() : "?";
             try {
-                route(method, path, parseQuery(query), headers, in, out);
+                route(method, path, parseQuery(query), headers, in, out, ip);
             } catch (SecurityException e) {
                 sendError(out, 403, "forbidden");
             } catch (Exception e) {
@@ -179,7 +201,7 @@ public class WebServer {
     }
 
     private void route(String method, String path, Map<String, String> q, Map<String, String> h,
-                       InputStream in, OutputStream out) throws Exception {
+                       InputStream in, OutputStream out, String ip) throws Exception {
         boolean get = method.equals("GET") || method.equals("HEAD");
         boolean post = method.equals("POST");
         if (path.equals("/") || path.equals("/index.html")) {
@@ -187,10 +209,41 @@ public class WebServer {
                 sendError(out, 405, "method not allowed");
                 return;
             }
-            sendBytes(out, 200, "text/html; charset=utf-8", readAsset("index.html"));
+            sendBytes(out, 200, "text/html; charset=utf-8", readAsset("index.html"), null);
             return;
         }
+        if (!path.startsWith("/api/")) {
+            sendError(out, 404, "not found");
+            return;
+        }
+        boolean needPin = Prefs.pinEnabled(ctx);
+        boolean authorized = !needPin || Prefs.token(ctx).equals(cookie(h, "ws_auth"));
+        if (path.equals("/api/auth")) {
+            JSONObject o = new JSONObject();
+            o.put("pin", needPin);
+            o.put("ok", authorized);
+            sendJson(out, 200, o);
+            return;
+        }
+        if (path.equals("/api/login")) {
+            if (!post) {
+                sendError(out, 405, "method not allowed");
+            } else {
+                login(q, out, ip);
+            }
+            return;
+        }
+        if (!authorized) {
+            sendError(out, 401, "pin");
+            return;
+        }
+        synchronized (clients) {
+            clients.put(ip, System.currentTimeMillis());
+        }
         switch (path) {
+            case "/api/ping":
+                sendOk(out);
+                break;
             case "/api/info":
                 info(out);
                 break;
@@ -201,39 +254,106 @@ public class WebServer {
                 if (!get) {
                     sendError(out, 405, "method not allowed");
                 } else {
-                    file(method, q, h, out);
+                    file(method, q, h, out, ip);
                 }
                 break;
             case "/api/upload":
                 if (!method.equals("PUT") && !post) {
                     sendError(out, 405, "method not allowed");
                 } else {
-                    upload(q, h, in, out);
+                    upload(q, h, in, out, ip);
                 }
                 break;
             case "/api/mkdir":
                 if (!post) {
                     sendError(out, 405, "method not allowed");
                 } else {
-                    mkdir(q, out);
+                    mkdir(q, out, ip);
                 }
                 break;
             case "/api/delete":
                 if (!post) {
                     sendError(out, 405, "method not allowed");
                 } else {
-                    delete(q, out);
+                    delete(q, out, ip);
                 }
                 break;
             case "/api/rename":
                 if (!post) {
                     sendError(out, 405, "method not allowed");
                 } else {
-                    rename(q, out);
+                    rename(q, out, ip);
                 }
                 break;
             default:
                 sendError(out, 404, "not found");
+        }
+    }
+
+    // ------------------------------------------------------------------ PIN
+
+    private void login(Map<String, String> q, OutputStream out, String ip) throws Exception {
+        long now = System.currentTimeMillis();
+        long[] f;
+        synchronized (fails) {
+            f = fails.get(ip);
+            if (f == null) {
+                f = new long[]{0, 0};
+                fails.put(ip, f);
+            }
+            if (f[1] > now) {
+                JSONObject o = new JSONObject();
+                o.put("error", "wait");
+                o.put("wait", (f[1] - now + 999) / 1000);
+                sendJson(out, 429, o);
+                return;
+            }
+        }
+        String pin = q.get("pin");
+        if (Prefs.pinEnabled(ctx) && pin != null && pin.equals(Prefs.pin(ctx))) {
+            synchronized (fails) {
+                fails.remove(ip);
+            }
+            Map<String, String> extra = new LinkedHashMap<>();
+            extra.put("Set-Cookie", "ws_auth=" + Prefs.token(ctx)
+                    + "; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax");
+            sendBytes(out, 200, "application/json; charset=utf-8",
+                    "{\"ok\":true}".getBytes(StandardCharsets.UTF_8), extra);
+            event("🔓", Util.t("Вход по PIN", "PIN login"), ip);
+            return;
+        }
+        synchronized (fails) {
+            f[0]++;
+            if (f[0] >= 5) {
+                f[0] = 0;
+                f[1] = now + 60000;
+            }
+        }
+        event("⛔", Util.t("Неверный PIN", "Wrong PIN"), ip);
+        sendError(out, 403, "wrong pin");
+    }
+
+    private static String cookie(Map<String, String> h, String name) {
+        String c = h.get("cookie");
+        if (c == null) {
+            return "";
+        }
+        for (String part : c.split(";")) {
+            String p = part.trim();
+            if (p.startsWith(name + "=")) {
+                return p.substring(name.length() + 1);
+            }
+        }
+        return "";
+    }
+
+    private void event(String icon, String text, String ip) {
+        if (listener != null) {
+            try {
+                listener.onEvent(icon, text, ip);
+            } catch (Exception ignored) {
+                // never break a request because of the log
+            }
         }
     }
 
@@ -277,7 +397,7 @@ public class WebServer {
     }
 
     private void file(String method, Map<String, String> q, Map<String, String> h,
-                      OutputStream out) throws Exception {
+                      OutputStream out, String ip) throws Exception {
         File f = resolve(q.get("path"));
         if (!f.isFile()) {
             sendError(out, 404, "file not found");
@@ -338,6 +458,9 @@ public class WebServer {
         if (method.equals("HEAD") || count == 0) {
             return;
         }
+        if (start == 0) {
+            event(download ? "⬇️" : "👁️", rel(f) + " (" + Util.size(len) + ")", ip);
+        }
         RandomAccessFile raf = new RandomAccessFile(f, "r");
         try {
             raf.seek(start);
@@ -357,7 +480,7 @@ public class WebServer {
     }
 
     private void upload(Map<String, String> q, Map<String, String> h, InputStream in,
-                        OutputStream out) throws Exception {
+                        OutputStream out, String ip) throws Exception {
         File dir = resolve(q.get("path"));
         if (!dir.isDirectory()) {
             sendError(out, 404, "not a folder");
@@ -417,7 +540,7 @@ public class WebServer {
         }
         scan(target.getAbsolutePath());
         if (listener != null) {
-            listener.onUploaded(target.getName(), len);
+            listener.onUploaded(rel(target), len, ip);
         }
         JSONObject o = new JSONObject();
         o.put("ok", true);
@@ -425,7 +548,7 @@ public class WebServer {
         sendJson(out, 200, o);
     }
 
-    private void mkdir(Map<String, String> q, OutputStream out) throws Exception {
+    private void mkdir(Map<String, String> q, OutputStream out, String ip) throws Exception {
         File dir = resolve(q.get("path"));
         String name = sanitize(q.get("name"));
         if (!dir.isDirectory() || name.isEmpty()) {
@@ -442,10 +565,11 @@ public class WebServer {
             return;
         }
         scan(nd.getAbsolutePath());
+        event("📁", Util.t("Новая папка: ", "New folder: ") + rel(nd), ip);
         sendOk(out);
     }
 
-    private void delete(Map<String, String> q, OutputStream out) throws Exception {
+    private void delete(Map<String, String> q, OutputStream out, String ip) throws Exception {
         File f = resolve(q.get("path"));
         if (isRoot(f)) {
             sendError(out, 403, "forbidden");
@@ -455,13 +579,15 @@ public class WebServer {
             sendError(out, 404, "not found");
             return;
         }
+        String name = rel(f);
         List<String> paths = new ArrayList<>();
         deleteRecursive(f, paths);
         scan(paths.toArray(new String[0]));
+        event("🗑️", Util.t("Удалено: ", "Deleted: ") + name, ip);
         sendOk(out);
     }
 
-    private void rename(Map<String, String> q, OutputStream out) throws Exception {
+    private void rename(Map<String, String> q, OutputStream out, String ip) throws Exception {
         File f = resolve(q.get("path"));
         String name = sanitize(q.get("name"));
         if (isRoot(f) || name.isEmpty()) {
@@ -477,6 +603,7 @@ public class WebServer {
             sendError(out, 409, "exists");
             return;
         }
+        String oldName = rel(f);
         List<String> paths = new ArrayList<>();
         collect(f, paths);
         if (!f.renameTo(nf)) {
@@ -485,6 +612,7 @@ public class WebServer {
         }
         collect(nf, paths);
         scan(paths.toArray(new String[0]));
+        event("✏️", oldName + " → " + nf.getName(), ip);
         sendOk(out);
     }
 
@@ -686,12 +814,14 @@ public class WebServer {
             case 200: return "OK";
             case 206: return "Partial Content";
             case 400: return "Bad Request";
+            case 401: return "Unauthorized";
             case 403: return "Forbidden";
             case 404: return "Not Found";
             case 405: return "Method Not Allowed";
             case 409: return "Conflict";
             case 411: return "Length Required";
             case 416: return "Range Not Satisfiable";
+            case 429: return "Too Many Requests";
             case 507: return "Insufficient Storage";
             default: return "Error";
         }
@@ -708,24 +838,27 @@ public class WebServer {
         out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
     }
 
-    private static void sendBytes(OutputStream out, int code, String type, byte[] body)
-            throws IOException {
+    private static void sendBytes(OutputStream out, int code, String type, byte[] body,
+                                  Map<String, String> extra) throws IOException {
         Map<String, String> h = new LinkedHashMap<>();
         h.put("Content-Type", type);
         h.put("Content-Length", String.valueOf(body.length));
         h.put("Cache-Control", "no-store");
+        if (extra != null) {
+            h.putAll(extra);
+        }
         writeHead(out, code, h);
         out.write(body);
     }
 
     private static void sendJson(OutputStream out, int code, JSONObject o) throws IOException {
         sendBytes(out, code, "application/json; charset=utf-8",
-                o.toString().getBytes(StandardCharsets.UTF_8));
+                o.toString().getBytes(StandardCharsets.UTF_8), null);
     }
 
     private static void sendOk(OutputStream out) throws IOException {
         sendBytes(out, 200, "application/json; charset=utf-8",
-                "{\"ok\":true}".getBytes(StandardCharsets.UTF_8));
+                "{\"ok\":true}".getBytes(StandardCharsets.UTF_8), null);
     }
 
     private static void sendError(OutputStream out, int code, String msg) throws IOException {
